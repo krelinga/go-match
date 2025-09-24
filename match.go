@@ -91,10 +91,12 @@ func defaultFormatFunc[T any](v T) string {
 func Equal[T comparable](want T) *LeafMatcher[T] {
 	return &LeafMatcher[T]{
 		fn: func(lm *LeafMatcher[T], got T) Result {
-			return &ResultImpl{
-				Name:    "Equal",
-				Match:   got == want,
-				Message: fmt.Sprintf("Expected %s == %s", lm.format(got), lm.format(want)),
+			return leafResult[T]{
+				valueFmt:  lm.format,
+				fmtString: "Expected %s == %s",
+				got:       &got,
+				want:      &want,
+				matched:   got == want,
 			}
 		},
 	}
@@ -103,10 +105,12 @@ func Equal[T comparable](want T) *LeafMatcher[T] {
 func NotEqual[T comparable](want T) *LeafMatcher[T] {
 	return &LeafMatcher[T]{
 		fn: func(lm *LeafMatcher[T], got T) Result {
-			return &ResultImpl{
-				Name:    "NotEqual",
-				Match:   got != want,
-				Message: fmt.Sprintf("Expected %s != %s", lm.format(got), lm.format(want)),
+			return leafResult[T]{
+				valueFmt:  lm.format,
+				fmtString: "Expected %s != %s",
+				got:       &got,
+				want:      &want,
+				matched:   got != want,
 			}
 		},
 	}
@@ -115,10 +119,12 @@ func NotEqual[T comparable](want T) *LeafMatcher[T] {
 func LessThan[T cmp.Ordered](want T) *LeafMatcher[T] {
 	return &LeafMatcher[T]{
 		fn: func(lm *LeafMatcher[T], got T) Result {
-			return &ResultImpl{
-				Name:    "LessThan",
-				Match:   got < want,
-				Message: fmt.Sprintf("Expected %s < %s", lm.format(got), lm.format(want)),
+			return &leafResult[T]{
+				valueFmt:  lm.format,
+				fmtString: "Expected %s < %s",
+				got:       &got,
+				want:      &want,
+				matched:   got < want,
 			}
 		},
 	}
@@ -127,10 +133,12 @@ func LessThan[T cmp.Ordered](want T) *LeafMatcher[T] {
 func GreaterThan[T cmp.Ordered](want T) *LeafMatcher[T] {
 	return &LeafMatcher[T]{
 		fn: func(lm *LeafMatcher[T], got T) Result {
-			return &ResultImpl{
-				Name:    "GreaterThan",
-				Match:   got > want,
-				Message: fmt.Sprintf("Expected %s > %s", lm.format(got), lm.format(want)),
+			return &leafResult[T]{
+				valueFmt:  lm.format,
+				fmtString: "Expected %s > %s",
+				got:       &got,
+				want:      &want,
+				matched:   got > want,
 			}
 		},
 	}
@@ -139,10 +147,12 @@ func GreaterThan[T cmp.Ordered](want T) *LeafMatcher[T] {
 func LessThanOrEqual[T cmp.Ordered](want T) *LeafMatcher[T] {
 	return &LeafMatcher[T]{
 		fn: func(lm *LeafMatcher[T], got T) Result {
-			return &ResultImpl{
-				Name:    "LessThanOrEqual",
-				Match:   got <= want,
-				Message: fmt.Sprintf("Expected %s <= %s", lm.format(got), lm.format(want)),
+			return &leafResult[T]{
+				valueFmt:  lm.format,
+				fmtString: "Expected %s <= %s",
+				got:       &got,
+				want:      &want,
+				matched:   got <= want,
 			}
 		},
 	}
@@ -151,10 +161,12 @@ func LessThanOrEqual[T cmp.Ordered](want T) *LeafMatcher[T] {
 func GreaterThanOrEqual[T cmp.Ordered](want T) *LeafMatcher[T] {
 	return &LeafMatcher[T]{
 		fn: func(lm *LeafMatcher[T], got T) Result {
-			return &ResultImpl{
-				Name:    "GreaterThanOrEqual",
-				Match:   got >= want,
-				Message: fmt.Sprintf("Expected %s >= %s", lm.format(got), lm.format(want)),
+			return &leafResult[T]{
+				valueFmt:  lm.format,
+				fmtString: "Expected %s >= %s",
+				got:       &got,
+				want:      &want,
+				matched:   got >= want,
 			}
 		},
 	}
@@ -179,6 +191,21 @@ func (lm *LeafMatcher[T]) format(t T) string {
 
 func (lm *LeafMatcher[T]) Match(got T) Result {
 	return lm.fn(lm, got)
+}
+
+type leafResult[T any] struct {
+	valueFmt  func(T) string
+	fmtString string
+	got, want *T
+	matched   bool
+}
+
+func (lr leafResult[T]) Matched() bool {
+	return lr.matched
+}
+
+func (lr leafResult[T]) String() string {
+	return fmt.Sprintf(lr.fmtString, lr.valueFmt(*lr.got), lr.valueFmt(*lr.want))
 }
 
 func AllOf[T any](children ...Matcher[T]) Matcher[T] {
