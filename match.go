@@ -90,7 +90,6 @@ func Equal[T comparable](want T) *LeafMatcher[T] {
 				Message: fmt.Sprintf("Expected %s == %s", lm.format(got), lm.format(want)),
 			}
 		},
-		want: want,
 	}
 }
 
@@ -103,7 +102,6 @@ func NotEqual[T comparable](want T) *LeafMatcher[T] {
 				Message: fmt.Sprintf("Expected %s != %s", lm.format(got), lm.format(want)),
 			}
 		},
-		want: want,
 	}
 }
 
@@ -116,7 +114,6 @@ func LessThan[T cmp.Ordered](want T) *LeafMatcher[T] {
 				Message: fmt.Sprintf("Expected %s < %s", lm.format(got), lm.format(want)),
 			}
 		},
-		want: want,
 	}
 }
 
@@ -129,7 +126,6 @@ func GreaterThan[T cmp.Ordered](want T) *LeafMatcher[T] {
 				Message: fmt.Sprintf("Expected %s > %s", lm.format(got), lm.format(want)),
 			}
 		},
-		want: want,
 	}
 }
 
@@ -142,7 +138,6 @@ func LessThanOrEqual[T cmp.Ordered](want T) *LeafMatcher[T] {
 				Message: fmt.Sprintf("Expected %s <= %s", lm.format(got), lm.format(want)),
 			}
 		},
-		want: want,
 	}
 }
 
@@ -155,13 +150,11 @@ func GreaterThanOrEqual[T cmp.Ordered](want T) *LeafMatcher[T] {
 				Message: fmt.Sprintf("Expected %s >= %s", lm.format(got), lm.format(want)),
 			}
 		},
-		want: want,
 	}
 }
 
 type LeafMatcher[T comparable] struct {
 	fn         func(lm *LeafMatcher[T], got T) *Result
-	want       T
 	formatFunc FormatFunc[T]
 }
 
