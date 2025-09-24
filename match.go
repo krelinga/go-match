@@ -42,12 +42,13 @@ func (r *Result) String() string {
 	summary := fmt.Sprintf("%s %s: %s", matchPart, r.Name, r.Message)
 	var sb strings.Builder
 	sb.WriteString(summary)
+	prefix := fmt.Sprintf("\n%s   ", matchPart)
 	for i, child := range r.Children {
 		if i == 0 {
-			sb.WriteString("\n  Children:")
+			sb.WriteString(fmt.Sprintf("\n%s Children:", matchPart))
 		}
-		sb.WriteString("\n    ")
-		sb.WriteString(strings.ReplaceAll(child.String(), "\n", "\n    "))
+		sb.WriteString(prefix)
+		sb.WriteString(strings.ReplaceAll(child.String(), "\n", prefix))
 	}
 	return sb.String()
 }
