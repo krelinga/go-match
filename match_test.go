@@ -7,8 +7,22 @@ import (
 )
 
 func Test(t *testing.T) {
-	result := match.Match(1, 2, match.Equals[int]())
-	if result.Match {
-		t.Errorf("Expected no match, got match")
-	}
+	t.Run("Single Equals", func(t *testing.T) {
+		result := match.Match(1, match.Equals(2))
+		if result.Match {
+			t.Errorf("Expected no match, got match")
+		}
+		t.Logf("\n%s\n", result)
+	})
+
+	t.Run("AllOf with one failing", func(t *testing.T) {
+		result := match.Match(1, match.AllOf(
+			match.Equals(1),
+			match.Equals(2),
+		))
+		if result.Match {
+			t.Errorf("Expected no match, got match")
+		}
+		t.Logf("\n%s\n", result)
+	})
 }

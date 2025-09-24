@@ -6,7 +6,7 @@ import (
 )
 
 type Matcher[T any] interface {
-	Match(want, got T) *Result
+	Match(got T) *Result
 }
 
 type LeafMatcher[T any] interface {
@@ -14,15 +14,15 @@ type LeafMatcher[T any] interface {
 	WithFormatFunc(FormatFunc[T]) LeafMatcher[T]
 }
 
-func Match[T any](want, got T, matcher Matcher[T]) *Result {
-	return matcher.Match(want, got)
+func Match[T any](got T, matcher Matcher[T]) *Result {
+	return matcher.Match(got)
 }
 
 type FormatFunc[T any] func(T) string
 
-type MatchFunc[T any] func(want, got T) *Result
+type MatchFunc[T any] func(got T) *Result
 
-type LeafMatchFunc[T any] func(want, got T, formatFunc FormatFunc[T]) *Result
+type LeafMatchFunc[T any] func(got T, formatFunc FormatFunc[T]) *Result
 
 type Result struct {
 	Match   bool
@@ -63,8 +63,8 @@ func (cr *ChildResult) String() string {
 	return fmt.Sprintf("- %s:\n  %s", cr.Name, indentedResultString)
 }
 
-func MatchChild[T any](parent *Result, name string, want, got T, matcher Matcher[T]) bool {
-	r := matcher.Match(want, got)
+func MatchChild[T any](parent *Result, name string, got T, matcher Matcher[T]) bool {
+	r := matcher.Match(got)
 	parent.Children = append(parent.Children, &ChildResult{
 		Name:   name,
 		Result: r,
@@ -74,8 +74,8 @@ func MatchChild[T any](parent *Result, name string, want, got T, matcher Matcher
 
 type matcher[T any] MatchFunc[T]
 
-func (m matcher[T]) Match(want, got T) *Result {
-	return m(want, got)
+func (m matcher[T]) Match(got T) *Result {
+	return m(got)
 }
 
 func NewMatcher[T any](matchFunc MatchFunc[T]) Matcher[T] {
@@ -91,14 +91,14 @@ func defaultFormatFunc[T any](v T) string {
 	return fmt.Sprintf("%v", v)
 }
 
-func (lm *leafMatcher[T]) Match(want, got T) *Result {
+func (lm *leafMatcher[T]) Match(got T) *Result {
 	var formatFunc FormatFunc[T]
 	if lm.formatFunc != nil {
 		formatFunc = lm.formatFunc
 	} else {
 		formatFunc = defaultFormatFunc[T]
 	}
-	return lm.leafMatchFunc(want, got, formatFunc)
+	return lm.leafMatchFunc(got, formatFunc)
 }
 
 func (lm *leafMatcher[T]) WithFormatFunc(formatFunc FormatFunc[T]) LeafMatcher[T] {
@@ -112,19 +112,19 @@ func NewLeafMatcher[T any](leafMatchFunc LeafMatchFunc[T]) *leafMatcher[T] {
 	}
 }
 
-func Equals[T comparable]() LeafMatcher[T] {
-	return NewLeafMatcher(func(want, got T, formatFunc FormatFunc[T]) *Result {
+func Equals[T comparable](want T) LeafMatcher[T] {
+	return NewLeafMatcher(func(got T, formatFunc FormatFunc[T]) *Result {
 		match := want == got
 		return &Result{
 			Name:    "Equals",
 			Match:   match,
-			Message: fmt.Sprintf("%s != %s", formatFunc(want), formatFunc(got)),
+			Message: fmt.Sprintf("Expected %s == %s", formatFunc(want), formatFunc(got)),
 		}
 	})
 }
 
 func AllOf[T any](children ...Matcher[T]) Matcher[T] {
-	return NewMatcher(func(want, got T) *Result {
+	return NewMatcher(func(got T) *Result {
 		r := &Result{
 			Name:  "AllOf",
 			Match: true,
@@ -132,7 +132,7 @@ func AllOf[T any](children ...Matcher[T]) Matcher[T] {
 		unmatched := []string{}
 		for i, child := range children {
 			childStr := fmt.Sprintf("%d", i)
-			if !MatchChild(r, childStr, want, got, child) {
+			if !MatchChild(r, childStr, got, child) {
 				r.Match = false
 				unmatched = append(unmatched, childStr)
 			}
@@ -147,7 +147,7 @@ func AllOf[T any](children ...Matcher[T]) Matcher[T] {
 }
 
 func AnyOf[T any](children ...Matcher[T]) Matcher[T] {
-	return NewMatcher(func(want, got T) *Result {
+	return NewMatcher(func(got T) *Result {
 		r := &Result{
 			Name:  "AnyOf",
 			Match: false,
@@ -155,7 +155,7 @@ func AnyOf[T any](children ...Matcher[T]) Matcher[T] {
 		matched := []string{}
 		for i, child := range children {
 			childStr := fmt.Sprintf("%d", i)
-			if MatchChild(r, childStr, want, got, child) {
+			if MatchChild(r, childStr, got, child) {
 				r.Match = true
 				matched = append(matched, childStr)
 			}
@@ -170,11 +170,11 @@ func AnyOf[T any](children ...Matcher[T]) Matcher[T] {
 }
 
 func Not[T any](child Matcher[T]) Matcher[T] {
-	return NewMatcher(func(want, got T) *Result {
+	return NewMatcher(func(got T) *Result {
 		r := &Result{
 			Name: "Not",
 		}
-		r.Match = !MatchChild(r, "child", want, got, child)
+		r.Match = !MatchChild(r, "child", got, child)
 		if r.Match {
 			r.Message = "child did not match"
 		} else {
