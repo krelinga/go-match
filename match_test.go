@@ -9,7 +9,7 @@ import (
 func Test(t *testing.T) {
 	t.Run("Single Equals", func(t *testing.T) {
 		result := match.Match(1, match.Equal(2))
-		if result.Match {
+		if result.Matched() {
 			t.Errorf("Expected no match, got match")
 		}
 		t.Logf("\n%s\n", result)
@@ -20,7 +20,7 @@ func Test(t *testing.T) {
 			match.Equal(1),
 			match.Equal(2),
 		))
-		if result.Match {
+		if result.Matched() {
 			t.Errorf("Expected no match, got match")
 		}
 		t.Logf("\n%s\n", result)
@@ -31,7 +31,7 @@ func Test(t *testing.T) {
 			match.Equal(1),
 			match.Equal(2),
 		))
-		if !result.Match {
+		if !result.Matched() {
 			t.Errorf("Expected match, got no match")
 		}
 		t.Logf("\n%s\n", result)

@@ -7,10 +7,15 @@ import (
 )
 
 type Matcher[T any] interface {
-	Match(got T) *ResultImpl
+	Match(got T) Result
 }
 
-func Match[T any](got T, matcher Matcher[T]) *ResultImpl {
+type Result interface {
+	Matched() bool
+	String() string
+}
+
+func Match[T any](got T, matcher Matcher[T]) Result {
 	return matcher.Match(got)
 }
 
@@ -22,6 +27,10 @@ type ResultImpl struct {
 	Name    string
 
 	Children []*ChildResult
+}
+
+func (r *ResultImpl) Matched() bool {
+	return r.Match
 }
 
 func (r *ResultImpl) String() string {
@@ -47,7 +56,7 @@ func (r *ResultImpl) String() string {
 
 type ChildResult struct {
 	Name   string
-	Result *ResultImpl
+	Result Result
 }
 
 func (cr *ChildResult) String() string {
@@ -62,12 +71,12 @@ func MatchChild[T any](parent *ResultImpl, name string, got T, matcher Matcher[T
 		Name:   name,
 		Result: r,
 	})
-	return r.Match
+	return r.Matched()
 }
 
 type matcher[T any] MatchFunc[T]
 
-func (m matcher[T]) Match(got T) *ResultImpl {
+func (m matcher[T]) Match(got T) Result {
 	return m(got)
 }
 
@@ -168,7 +177,7 @@ func (lm *LeafMatcher[T]) format(t T) string {
 	return defaultFormatFunc(t)
 }
 
-func (lm *LeafMatcher[T]) Match(got T) *ResultImpl {
+func (lm *LeafMatcher[T]) Match(got T) Result {
 	return lm.fn(lm, got)
 }
 
