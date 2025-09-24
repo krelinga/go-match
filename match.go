@@ -5,42 +5,128 @@ import (
 	"strings"
 )
 
+type Matcher[T any] interface {
+	Match(want, got T) *Result
+}
+
+type LeafMatcher[T any] interface {
+	Matcher[T]
+	WithFormatFunc(FormatFunc[T]) LeafMatcher[T]
+}
+
+func Match[T any](want, got T, matcher Matcher[T]) *Result {
+	return matcher.Match(want, got)
+}
+
+type FormatFunc[T any] func(T) string
+
 type MatchFunc[T any] func(want, got T) *Result
 
+type LeafMatchFunc[T any] func(want, got T, formatFunc FormatFunc[T]) *Result
+
 type Result struct {
-	Match bool
+	Match   bool
 	Message string
-	Name string
+	Name    string
 
 	Children []*ChildResult
 }
 
+func (r *Result) String() string {
+	var matchPart string
+	if r.Match {
+		matchPart = "  "
+	} else {
+		matchPart = "!!"
+	}
+	summary := fmt.Sprintf("%s %s: %s", matchPart, r.Name, r.Message)
+	var sb strings.Builder
+	sb.WriteString(summary)
+	for i, child := range r.Children {
+		if i == 0 {
+			sb.WriteString("\n  Children:")
+		}
+		sb.WriteString("\n    ")
+		sb.WriteString(strings.ReplaceAll(child.String(), "\n", "\n    "))
+	}
+	return sb.String()
+}
+
 type ChildResult struct {
-	Name string
+	Name   string
 	Result *Result
 }
 
-func MatchChild[T any](parent *Result, name string, want, got T, fn MatchFunc[T]) bool {
-	r := fn(want, got)
+func (cr *ChildResult) String() string {
+	resultString := cr.Result.String()
+	indentedResultString := strings.ReplaceAll(resultString, "\n", "\n  ")
+	return fmt.Sprintf("- %s:\n  %s", cr.Name, indentedResultString)
+}
+
+func MatchChild[T any](parent *Result, name string, want, got T, matcher Matcher[T]) bool {
+	r := matcher.Match(want, got)
 	parent.Children = append(parent.Children, &ChildResult{
-		Name: name,
+		Name:   name,
 		Result: r,
 	})
 	return r.Match
 }
 
-func Equals[T comparable](want, got T) *Result {
-	return &Result{
-		Name: "Equals",
-		Match: want == got,
-		Message: fmt.Sprintf("want: %v, got: %v", want, got),
+type matcher[T any] MatchFunc[T]
+
+func (m matcher[T]) Match(want, got T) *Result {
+	return m(want, got)
+}
+
+func NewMatcher[T any](matchFunc MatchFunc[T]) Matcher[T] {
+	return matcher[T](matchFunc)
+}
+
+type leafMatcher[T any] struct {
+	leafMatchFunc LeafMatchFunc[T]
+	formatFunc    FormatFunc[T]
+}
+
+func defaultFormatFunc[T any](v T) string {
+	return fmt.Sprintf("%v", v)
+}
+
+func (lm *leafMatcher[T]) Match(want, got T) *Result {
+	var formatFunc FormatFunc[T]
+	if lm.formatFunc != nil {
+		formatFunc = lm.formatFunc
+	} else {
+		formatFunc = defaultFormatFunc[T]
+	}
+	return lm.leafMatchFunc(want, got, formatFunc)
+}
+
+func (lm *leafMatcher[T]) WithFormatFunc(formatFunc FormatFunc[T]) LeafMatcher[T] {
+	lm.formatFunc = formatFunc
+	return lm
+}
+
+func NewLeafMatcher[T any](leafMatchFunc LeafMatchFunc[T]) *leafMatcher[T] {
+	return &leafMatcher[T]{
+		leafMatchFunc: leafMatchFunc,
 	}
 }
 
-func AllOf[T any](children ...MatchFunc[T]) MatchFunc[T] {
-	return func(want, got T) *Result {
+func Equals[T comparable]() LeafMatcher[T] {
+	return NewLeafMatcher(func(want, got T, formatFunc FormatFunc[T]) *Result {
+		match := want == got
+		return &Result{
+			Name:    "Equals",
+			Match:   match,
+			Message: fmt.Sprintf("%s != %s", formatFunc(want), formatFunc(got)),
+		}
+	})
+}
+
+func AllOf[T any](children ...Matcher[T]) Matcher[T] {
+	return NewMatcher(func(want, got T) *Result {
 		r := &Result{
-			Name: "AllOf",
+			Name:  "AllOf",
 			Match: true,
 		}
 		unmatched := []string{}
@@ -57,13 +143,13 @@ func AllOf[T any](children ...MatchFunc[T]) MatchFunc[T] {
 			r.Message = fmt.Sprintf("unmatched indices: %s", strings.Join(unmatched, ", "))
 		}
 		return r
-	}
+	})
 }
 
-func AnyOf[T any](children ...MatchFunc[T]) MatchFunc[T] {
-	return func(want, got T) *Result {
+func AnyOf[T any](children ...Matcher[T]) Matcher[T] {
+	return NewMatcher(func(want, got T) *Result {
 		r := &Result{
-			Name: "AnyOf",
+			Name:  "AnyOf",
 			Match: false,
 		}
 		matched := []string{}
@@ -80,11 +166,11 @@ func AnyOf[T any](children ...MatchFunc[T]) MatchFunc[T] {
 			r.Message = "no matches"
 		}
 		return r
-	}
+	})
 }
 
-func Not[T any](child MatchFunc[T]) MatchFunc[T] {
-	return func(want, got T) *Result {
+func Not[T any](child Matcher[T]) Matcher[T] {
+	return NewMatcher(func(want, got T) *Result {
 		r := &Result{
 			Name: "Not",
 		}
@@ -95,5 +181,5 @@ func Not[T any](child MatchFunc[T]) MatchFunc[T] {
 			r.Message = "child matched"
 		}
 		return r
-	}
+	})
 }
