@@ -21,6 +21,34 @@ func Match[T any](got T, matcher Matcher[T]) Result {
 
 type MatchFunc[T any] func(got T) *ResultImpl
 
+func matchChar(matched bool) string {
+	if matched {
+		return " "
+	}
+	return "!"
+}
+
+type SimpleResult struct {
+	message string
+	matched bool
+}
+
+func NewSimpleResult(matched bool, message string) SimpleResult {
+	return SimpleResult{
+		message: message,
+		matched: matched,
+	}
+}
+
+func (sr SimpleResult) Matched() bool {
+	return sr.matched
+}
+
+func (sr SimpleResult) String() string {
+	prefix := matchChar(sr.matched)
+	return fmt.Sprintf("%s %s", prefix, sr.message)
+}
+
 type ResultImpl struct {
 	Match   bool
 	Message string
@@ -87,7 +115,9 @@ func NewMatcher[T any](matchFunc MatchFunc[T]) Matcher[T] {
 func Equal[T comparable](want T) *LeafMatcher[T] {
 	return &LeafMatcher[T]{
 		fn: func(lm *LeafMatcher[T], got T) Result {
-			return newLeafResult(got == want, got, want, "==", lm.format)
+			matched := got == want
+			message := fmt.Sprintf("Expected %s == %s", lm.format(got), lm.format(want))
+			return NewSimpleResult(matched, message)
 		},
 	}
 }
@@ -95,7 +125,9 @@ func Equal[T comparable](want T) *LeafMatcher[T] {
 func NotEqual[T comparable](want T) *LeafMatcher[T] {
 	return &LeafMatcher[T]{
 		fn: func(lm *LeafMatcher[T], got T) Result {
-			return newLeafResult(got != want, got, want, "!=", lm.format)
+			matched := got != want
+			message := fmt.Sprintf("Expected %s != %s", lm.format(got), lm.format(want))
+			return NewSimpleResult(matched, message)
 		},
 	}
 }
@@ -103,7 +135,9 @@ func NotEqual[T comparable](want T) *LeafMatcher[T] {
 func LessThan[T cmp.Ordered](want T) *LeafMatcher[T] {
 	return &LeafMatcher[T]{
 		fn: func(lm *LeafMatcher[T], got T) Result {
-			return newLeafResult(got < want, got, want, "<", lm.format)
+			matched := got < want
+			message := fmt.Sprintf("Expected %s < %s", lm.format(got), lm.format(want))
+			return NewSimpleResult(matched, message)
 		},
 	}
 }
@@ -111,7 +145,9 @@ func LessThan[T cmp.Ordered](want T) *LeafMatcher[T] {
 func GreaterThan[T cmp.Ordered](want T) *LeafMatcher[T] {
 	return &LeafMatcher[T]{
 		fn: func(lm *LeafMatcher[T], got T) Result {
-			return newLeafResult(got > want, got, want, ">", lm.format)
+			matched := got > want
+			message := fmt.Sprintf("Expected %s > %s", lm.format(got), lm.format(want))
+			return NewSimpleResult(matched, message)
 		},
 	}
 }
@@ -119,7 +155,9 @@ func GreaterThan[T cmp.Ordered](want T) *LeafMatcher[T] {
 func LessThanOrEqual[T cmp.Ordered](want T) *LeafMatcher[T] {
 	return &LeafMatcher[T]{
 		fn: func(lm *LeafMatcher[T], got T) Result {
-			return newLeafResult(got <= want, got, want, "<=", lm.format)
+			matched := got <= want
+			message := fmt.Sprintf("Expected %s <= %s", lm.format(got), lm.format(want))
+			return NewSimpleResult(matched, message)
 		},
 	}
 }
@@ -127,7 +165,9 @@ func LessThanOrEqual[T cmp.Ordered](want T) *LeafMatcher[T] {
 func GreaterThanOrEqual[T cmp.Ordered](want T) *LeafMatcher[T] {
 	return &LeafMatcher[T]{
 		fn: func(lm *LeafMatcher[T], got T) Result {
-			return newLeafResult(got >= want, got, want, ">=", lm.format)
+			matched := got >= want
+			message := fmt.Sprintf("Expected %s >= %s", lm.format(got), lm.format(want))
+			return NewSimpleResult(matched, message)
 		},
 	}
 }
@@ -151,34 +191,6 @@ func (lm *LeafMatcher[T]) format(t T) string {
 		return lm.formatFunc(t)
 	}
 	return fmt.Sprintf("%v", t)
-}
-
-func newLeafResult[T any](matched bool, got, want T, symbol string, valueFmt func(T) string) leafResult[T] {
-	return leafResult[T]{
-		matched: matched,
-		stringFunc: func(matched bool) string {
-			var matchPart string
-			if matched {
-				matchPart = " "
-			} else {
-				matchPart = "!"
-			}
-			return fmt.Sprintf("%s Expected %s %s %s", matchPart, valueFmt(got), symbol, valueFmt(want))
-		},
-	}
-}
-
-type leafResult[T any] struct {
-	stringFunc func(matched bool) string
-	matched    bool
-}
-
-func (lr leafResult[T]) Matched() bool {
-	return lr.matched
-}
-
-func (lr leafResult[T]) String() string {
-	return lr.stringFunc(lr.matched)
 }
 
 func AllOf[T any](children ...Matcher[T]) Matcher[T] {
