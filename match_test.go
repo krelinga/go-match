@@ -8,7 +8,7 @@ import (
 
 func Test(t *testing.T) {
 	t.Run("Single Equals", func(t *testing.T) {
-		result := match.Match(1, match.Equals(2))
+		result := match.Match(1, match.Equal(2))
 		if result.Match {
 			t.Errorf("Expected no match, got match")
 		}
@@ -17,8 +17,8 @@ func Test(t *testing.T) {
 
 	t.Run("AllOf with one failing", func(t *testing.T) {
 		result := match.Match(1, match.AllOf(
-			match.Equals(1),
-			match.Equals(2),
+			match.Equal(1),
+			match.Equal(2),
 		))
 		if result.Match {
 			t.Errorf("Expected no match, got match")
@@ -28,8 +28,8 @@ func Test(t *testing.T) {
 
 	t.Run("AnyOf with one passing", func(t *testing.T) {
 		result := match.Match(1, match.AnyOf(
-			match.Equals(1),
-			match.Equals(2),
+			match.Equal(1),
+			match.Equal(2),
 		))
 		if !result.Match {
 			t.Errorf("Expected match, got no match")

@@ -9,11 +9,6 @@ type Matcher[T any] interface {
 	Match(got T) *Result
 }
 
-type LeafMatcher[T any] interface {
-	Matcher[T]
-	WithFormatFunc(FormatFunc[T]) LeafMatcher[T]
-}
-
 func Match[T any](got T, matcher Matcher[T]) *Result {
 	return matcher.Match(got)
 }
@@ -21,8 +16,6 @@ func Match[T any](got T, matcher Matcher[T]) *Result {
 type FormatFunc[T any] func(T) string
 
 type MatchFunc[T any] func(got T) *Result
-
-type LeafMatchFunc[T any] func(got T, formatFunc FormatFunc[T]) *Result
 
 type Result struct {
 	Match   bool
@@ -83,45 +76,40 @@ func NewMatcher[T any](matchFunc MatchFunc[T]) Matcher[T] {
 	return matcher[T](matchFunc)
 }
 
-type leafMatcher[T any] struct {
-	leafMatchFunc LeafMatchFunc[T]
-	formatFunc    FormatFunc[T]
-}
-
 func defaultFormatFunc[T any](v T) string {
 	return fmt.Sprintf("%v", v)
 }
 
-func (lm *leafMatcher[T]) Match(got T) *Result {
-	var formatFunc FormatFunc[T]
-	if lm.formatFunc != nil {
-		formatFunc = lm.formatFunc
-	} else {
-		formatFunc = defaultFormatFunc[T]
-	}
-	return lm.leafMatchFunc(got, formatFunc)
-}
-
-func (lm *leafMatcher[T]) WithFormatFunc(formatFunc FormatFunc[T]) LeafMatcher[T] {
-	lm.formatFunc = formatFunc
-	return lm
-}
-
-func NewLeafMatcher[T any](leafMatchFunc LeafMatchFunc[T]) *leafMatcher[T] {
-	return &leafMatcher[T]{
-		leafMatchFunc: leafMatchFunc,
+func Equal[T comparable](want T) *EqualMatcher[T] {
+	return &EqualMatcher[T]{
+		want: want,
 	}
 }
 
-func Equals[T comparable](want T) LeafMatcher[T] {
-	return NewLeafMatcher(func(got T, formatFunc FormatFunc[T]) *Result {
-		match := want == got
-		return &Result{
-			Name:    "Equals",
-			Match:   match,
-			Message: fmt.Sprintf("Expected %s == %s", formatFunc(want), formatFunc(got)),
-		}
-	})
+type EqualMatcher[T comparable] struct {
+	want       T
+	formatFunc FormatFunc[T]
+}
+
+func (em *EqualMatcher[T]) WithFormatFunc(formatFunc FormatFunc[T]) *EqualMatcher[T] {
+	em.formatFunc = formatFunc
+	return em
+}
+
+func (em *EqualMatcher[T]) format(t T) string {
+	if em.formatFunc != nil {
+		return em.formatFunc(t)
+	}
+	return defaultFormatFunc(t)
+}
+
+func (em *EqualMatcher[T]) Match(got T) *Result {
+	match := em.want == got
+	return &Result{
+		Name:    "EqualMatcher",
+		Match:   match,
+		Message: fmt.Sprintf("Expected %s == %s", em.format(em.want), em.format(got)),
+	}
 }
 
 func AllOf[T any](children ...Matcher[T]) Matcher[T] {
