@@ -35,9 +35,9 @@ type Result struct {
 func (r *Result) String() string {
 	var matchPart string
 	if r.Match {
-		matchPart = "  "
+		matchPart = " "
 	} else {
-		matchPart = "!!"
+		matchPart = "!"
 	}
 	summary := fmt.Sprintf("%s %s: %s", matchPart, r.Name, r.Message)
 	var sb strings.Builder
