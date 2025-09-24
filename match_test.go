@@ -25,4 +25,15 @@ func Test(t *testing.T) {
 		}
 		t.Logf("\n%s\n", result)
 	})
+
+	t.Run("AnyOf with one passing", func(t *testing.T) {
+		result := match.Match(1, match.AnyOf(
+			match.Equals(1),
+			match.Equals(2),
+		))
+		if !result.Match {
+			t.Errorf("Expected match, got no match")
+		}
+		t.Logf("\n%s\n", result)
+	})
 }
