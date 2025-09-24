@@ -14,8 +14,6 @@ func Match[T any](got T, matcher Matcher[T]) *Result {
 	return matcher.Match(got)
 }
 
-type FormatFunc[T any] func(T) string
-
 type MatchFunc[T any] func(got T) *Result
 
 type Result struct {
@@ -155,10 +153,10 @@ func GreaterThanOrEqual[T cmp.Ordered](want T) *LeafMatcher[T] {
 
 type LeafMatcher[T comparable] struct {
 	fn         func(lm *LeafMatcher[T], got T) *Result
-	formatFunc FormatFunc[T]
+	formatFunc func(T) string
 }
 
-func (lm *LeafMatcher[T]) WithFormatFunc(formatFunc FormatFunc[T]) *LeafMatcher[T] {
+func (lm *LeafMatcher[T]) WithFormatFunc(formatFunc func(T) string) *LeafMatcher[T] {
 	lm.formatFunc = formatFunc
 	return lm
 }
