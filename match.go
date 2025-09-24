@@ -7,16 +7,16 @@ import (
 )
 
 type Matcher[T any] interface {
-	Match(got T) *Result
+	Match(got T) *ResultImpl
 }
 
-func Match[T any](got T, matcher Matcher[T]) *Result {
+func Match[T any](got T, matcher Matcher[T]) *ResultImpl {
 	return matcher.Match(got)
 }
 
-type MatchFunc[T any] func(got T) *Result
+type MatchFunc[T any] func(got T) *ResultImpl
 
-type Result struct {
+type ResultImpl struct {
 	Match   bool
 	Message string
 	Name    string
@@ -24,7 +24,7 @@ type Result struct {
 	Children []*ChildResult
 }
 
-func (r *Result) String() string {
+func (r *ResultImpl) String() string {
 	var matchPart string
 	if r.Match {
 		matchPart = " "
@@ -47,7 +47,7 @@ func (r *Result) String() string {
 
 type ChildResult struct {
 	Name   string
-	Result *Result
+	Result *ResultImpl
 }
 
 func (cr *ChildResult) String() string {
@@ -56,7 +56,7 @@ func (cr *ChildResult) String() string {
 	return fmt.Sprintf("- %s:\n  %s", cr.Name, indentedResultString)
 }
 
-func MatchChild[T any](parent *Result, name string, got T, matcher Matcher[T]) bool {
+func MatchChild[T any](parent *ResultImpl, name string, got T, matcher Matcher[T]) bool {
 	r := matcher.Match(got)
 	parent.Children = append(parent.Children, &ChildResult{
 		Name:   name,
@@ -67,7 +67,7 @@ func MatchChild[T any](parent *Result, name string, got T, matcher Matcher[T]) b
 
 type matcher[T any] MatchFunc[T]
 
-func (m matcher[T]) Match(got T) *Result {
+func (m matcher[T]) Match(got T) *ResultImpl {
 	return m(got)
 }
 
@@ -81,8 +81,8 @@ func defaultFormatFunc[T any](v T) string {
 
 func Equal[T comparable](want T) *LeafMatcher[T] {
 	return &LeafMatcher[T]{
-		fn: func(lm *LeafMatcher[T], got T) *Result {
-			return &Result{
+		fn: func(lm *LeafMatcher[T], got T) *ResultImpl {
+			return &ResultImpl{
 				Name:    "Equal",
 				Match:   got == want,
 				Message: fmt.Sprintf("Expected %s == %s", lm.format(got), lm.format(want)),
@@ -93,8 +93,8 @@ func Equal[T comparable](want T) *LeafMatcher[T] {
 
 func NotEqual[T comparable](want T) *LeafMatcher[T] {
 	return &LeafMatcher[T]{
-		fn: func(lm *LeafMatcher[T], got T) *Result {
-			return &Result{
+		fn: func(lm *LeafMatcher[T], got T) *ResultImpl {
+			return &ResultImpl{
 				Name:    "NotEqual",
 				Match:   got != want,
 				Message: fmt.Sprintf("Expected %s != %s", lm.format(got), lm.format(want)),
@@ -105,8 +105,8 @@ func NotEqual[T comparable](want T) *LeafMatcher[T] {
 
 func LessThan[T cmp.Ordered](want T) *LeafMatcher[T] {
 	return &LeafMatcher[T]{
-		fn: func(lm *LeafMatcher[T], got T) *Result {
-			return &Result{
+		fn: func(lm *LeafMatcher[T], got T) *ResultImpl {
+			return &ResultImpl{
 				Name:    "LessThan",
 				Match:   got < want,
 				Message: fmt.Sprintf("Expected %s < %s", lm.format(got), lm.format(want)),
@@ -117,8 +117,8 @@ func LessThan[T cmp.Ordered](want T) *LeafMatcher[T] {
 
 func GreaterThan[T cmp.Ordered](want T) *LeafMatcher[T] {
 	return &LeafMatcher[T]{
-		fn: func(lm *LeafMatcher[T], got T) *Result {
-			return &Result{
+		fn: func(lm *LeafMatcher[T], got T) *ResultImpl {
+			return &ResultImpl{
 				Name:    "GreaterThan",
 				Match:   got > want,
 				Message: fmt.Sprintf("Expected %s > %s", lm.format(got), lm.format(want)),
@@ -129,8 +129,8 @@ func GreaterThan[T cmp.Ordered](want T) *LeafMatcher[T] {
 
 func LessThanOrEqual[T cmp.Ordered](want T) *LeafMatcher[T] {
 	return &LeafMatcher[T]{
-		fn: func(lm *LeafMatcher[T], got T) *Result {
-			return &Result{
+		fn: func(lm *LeafMatcher[T], got T) *ResultImpl {
+			return &ResultImpl{
 				Name:    "LessThanOrEqual",
 				Match:   got <= want,
 				Message: fmt.Sprintf("Expected %s <= %s", lm.format(got), lm.format(want)),
@@ -141,8 +141,8 @@ func LessThanOrEqual[T cmp.Ordered](want T) *LeafMatcher[T] {
 
 func GreaterThanOrEqual[T cmp.Ordered](want T) *LeafMatcher[T] {
 	return &LeafMatcher[T]{
-		fn: func(lm *LeafMatcher[T], got T) *Result {
-			return &Result{
+		fn: func(lm *LeafMatcher[T], got T) *ResultImpl {
+			return &ResultImpl{
 				Name:    "GreaterThanOrEqual",
 				Match:   got >= want,
 				Message: fmt.Sprintf("Expected %s >= %s", lm.format(got), lm.format(want)),
@@ -152,7 +152,7 @@ func GreaterThanOrEqual[T cmp.Ordered](want T) *LeafMatcher[T] {
 }
 
 type LeafMatcher[T comparable] struct {
-	fn         func(lm *LeafMatcher[T], got T) *Result
+	fn         func(lm *LeafMatcher[T], got T) *ResultImpl
 	formatFunc func(T) string
 }
 
@@ -168,13 +168,13 @@ func (lm *LeafMatcher[T]) format(t T) string {
 	return defaultFormatFunc(t)
 }
 
-func (lm *LeafMatcher[T]) Match(got T) *Result {
+func (lm *LeafMatcher[T]) Match(got T) *ResultImpl {
 	return lm.fn(lm, got)
 }
 
 func AllOf[T any](children ...Matcher[T]) Matcher[T] {
-	return NewMatcher(func(got T) *Result {
-		r := &Result{
+	return NewMatcher(func(got T) *ResultImpl {
+		r := &ResultImpl{
 			Name:  "AllOf",
 			Match: true,
 		}
@@ -196,8 +196,8 @@ func AllOf[T any](children ...Matcher[T]) Matcher[T] {
 }
 
 func AnyOf[T any](children ...Matcher[T]) Matcher[T] {
-	return NewMatcher(func(got T) *Result {
-		r := &Result{
+	return NewMatcher(func(got T) *ResultImpl {
+		r := &ResultImpl{
 			Name:  "AnyOf",
 			Match: false,
 		}
@@ -219,8 +219,8 @@ func AnyOf[T any](children ...Matcher[T]) Matcher[T] {
 }
 
 func Not[T any](child Matcher[T]) Matcher[T] {
-	return NewMatcher(func(got T) *Result {
-		r := &Result{
+	return NewMatcher(func(got T) *ResultImpl {
+		r := &ResultImpl{
 			Name: "Not",
 		}
 		r.Match = !MatchChild(r, "child", got, child)
