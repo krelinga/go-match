@@ -90,7 +90,7 @@ func defaultFormatFunc[T any](v T) string {
 
 func Equal[T comparable](want T) *LeafMatcher[T] {
 	return &LeafMatcher[T]{
-		fn: func(lm *LeafMatcher[T], got T) *ResultImpl {
+		fn: func(lm *LeafMatcher[T], got T) Result {
 			return &ResultImpl{
 				Name:    "Equal",
 				Match:   got == want,
@@ -102,7 +102,7 @@ func Equal[T comparable](want T) *LeafMatcher[T] {
 
 func NotEqual[T comparable](want T) *LeafMatcher[T] {
 	return &LeafMatcher[T]{
-		fn: func(lm *LeafMatcher[T], got T) *ResultImpl {
+		fn: func(lm *LeafMatcher[T], got T) Result {
 			return &ResultImpl{
 				Name:    "NotEqual",
 				Match:   got != want,
@@ -114,7 +114,7 @@ func NotEqual[T comparable](want T) *LeafMatcher[T] {
 
 func LessThan[T cmp.Ordered](want T) *LeafMatcher[T] {
 	return &LeafMatcher[T]{
-		fn: func(lm *LeafMatcher[T], got T) *ResultImpl {
+		fn: func(lm *LeafMatcher[T], got T) Result {
 			return &ResultImpl{
 				Name:    "LessThan",
 				Match:   got < want,
@@ -126,7 +126,7 @@ func LessThan[T cmp.Ordered](want T) *LeafMatcher[T] {
 
 func GreaterThan[T cmp.Ordered](want T) *LeafMatcher[T] {
 	return &LeafMatcher[T]{
-		fn: func(lm *LeafMatcher[T], got T) *ResultImpl {
+		fn: func(lm *LeafMatcher[T], got T) Result {
 			return &ResultImpl{
 				Name:    "GreaterThan",
 				Match:   got > want,
@@ -138,7 +138,7 @@ func GreaterThan[T cmp.Ordered](want T) *LeafMatcher[T] {
 
 func LessThanOrEqual[T cmp.Ordered](want T) *LeafMatcher[T] {
 	return &LeafMatcher[T]{
-		fn: func(lm *LeafMatcher[T], got T) *ResultImpl {
+		fn: func(lm *LeafMatcher[T], got T) Result {
 			return &ResultImpl{
 				Name:    "LessThanOrEqual",
 				Match:   got <= want,
@@ -150,7 +150,7 @@ func LessThanOrEqual[T cmp.Ordered](want T) *LeafMatcher[T] {
 
 func GreaterThanOrEqual[T cmp.Ordered](want T) *LeafMatcher[T] {
 	return &LeafMatcher[T]{
-		fn: func(lm *LeafMatcher[T], got T) *ResultImpl {
+		fn: func(lm *LeafMatcher[T], got T) Result {
 			return &ResultImpl{
 				Name:    "GreaterThanOrEqual",
 				Match:   got >= want,
@@ -161,7 +161,7 @@ func GreaterThanOrEqual[T cmp.Ordered](want T) *LeafMatcher[T] {
 }
 
 type LeafMatcher[T comparable] struct {
-	fn         func(lm *LeafMatcher[T], got T) *ResultImpl
+	fn         func(lm *LeafMatcher[T], got T) Result
 	formatFunc func(T) string
 }
 
