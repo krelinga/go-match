@@ -19,7 +19,7 @@ func Match[T any](got T, matcher Matcher[T]) Result {
 	return matcher.Match(got)
 }
 
-type MatchFunc[T any] func(got T) *ResultImpl
+type MatchFunc[T any] func(got T) Result
 
 func matchChar(matched bool) string {
 	if matched {
@@ -47,59 +47,6 @@ func (sr SimpleResult) Matched() bool {
 func (sr SimpleResult) String() string {
 	prefix := matchChar(sr.matched)
 	return fmt.Sprintf("%s %s", prefix, sr.message)
-}
-
-type ResultImpl struct {
-	Match   bool
-	Message string
-	Name    string
-
-	Children []*ChildResult
-}
-
-func (r *ResultImpl) Matched() bool {
-	return r.Match
-}
-
-func (r *ResultImpl) String() string {
-	var matchPart string
-	if r.Match {
-		matchPart = " "
-	} else {
-		matchPart = "!"
-	}
-	summary := fmt.Sprintf("%s %s: %s", matchPart, r.Name, r.Message)
-	var sb strings.Builder
-	sb.WriteString(summary)
-	prefix := fmt.Sprintf("\n%s   ", matchPart)
-	for i, child := range r.Children {
-		if i == 0 {
-			sb.WriteString(fmt.Sprintf("\n%s Children:", matchPart))
-		}
-		sb.WriteString(prefix)
-		sb.WriteString(strings.ReplaceAll(child.String(), "\n", prefix))
-	}
-	return sb.String()
-}
-
-type ChildResult struct {
-	Name   string
-	Result Result
-}
-
-func (cr *ChildResult) String() string {
-	resultString := cr.Result.String()
-	indentedResultString := strings.ReplaceAll(resultString, "\n", "\n  ")
-	return fmt.Sprintf("- %s:\n  %s", cr.Name, indentedResultString)
-}
-
-func MatchChild[T any](parent *ResultImpl, name string, got T, matcher Matcher[T]) bool {
-	r := matcher.Match(got)
-	parent.Children = append(parent.Children, &ChildResult{
-		Name:   name,
-		Result: r,
-	})
-	return r.Matched()
 }
 
 type matcher[T any] MatchFunc[T]
@@ -194,62 +141,66 @@ func (lm *LeafMatcher[T]) format(t T) string {
 }
 
 func AllOf[T any](children ...Matcher[T]) Matcher[T] {
-	return NewMatcher(func(got T) *ResultImpl {
-		r := &ResultImpl{
-			Name:  "AllOf",
-			Match: true,
-		}
-		unmatched := []string{}
+	return NewMatcher(func(got T) Result {
+		childResults := make([]Result, len(children))
+		matched := true
 		for i, child := range children {
-			childStr := fmt.Sprintf("%d", i)
-			if !MatchChild(r, childStr, got, child) {
-				r.Match = false
-				unmatched = append(unmatched, childStr)
-			}
+			childResults[i] = child.Match(got)
+			matched = matched && childResults[i].Matched()
 		}
-		if r.Match {
-			r.Message = "all matched"
-		} else {
-			r.Message = fmt.Sprintf("unmatched indices: %s", strings.Join(unmatched, ", "))
-		}
-		return r
+		summary := "Expected all of the following to match:"
+		return NewParentResult(matched, summary, childResults...)
 	})
 }
 
 func AnyOf[T any](children ...Matcher[T]) Matcher[T] {
-	return NewMatcher(func(got T) *ResultImpl {
-		r := &ResultImpl{
-			Name:  "AnyOf",
-			Match: false,
-		}
-		matched := []string{}
+	return NewMatcher(func(got T) Result {
+		childResults := make([]Result, len(children))
+		matched := false
 		for i, child := range children {
-			childStr := fmt.Sprintf("%d", i)
-			if MatchChild(r, childStr, got, child) {
-				r.Match = true
-				matched = append(matched, childStr)
-			}
+			childResults[i] = child.Match(got)
+			matched = matched || childResults[i].Matched()
 		}
-		if r.Match {
-			r.Message = fmt.Sprintf("matched indices: %s", strings.Join(matched, ", "))
-		} else {
-			r.Message = "no matches"
-		}
-		return r
+		summary := "Expected any of the following to match:"
+		return NewParentResult(matched, summary, childResults...)
 	})
 }
 
 func Not[T any](child Matcher[T]) Matcher[T] {
-	return NewMatcher(func(got T) *ResultImpl {
-		r := &ResultImpl{
-			Name: "Not",
-		}
-		r.Match = !MatchChild(r, "child", got, child)
-		if r.Match {
-			r.Message = "child did not match"
-		} else {
-			r.Message = "child matched"
-		}
-		return r
+	return NewMatcher(func(got T) Result {
+		childResult := child.Match(got)
+		matched := !childResult.Matched()
+		summary := "Expected the following to not match:"
+		return NewParentResult(matched, summary, childResult)
 	})
+}
+
+type ParentResult struct {
+	children []Result
+	summary  string
+	matched  bool
+}
+
+func NewParentResult(matched bool, summary string, children ...Result) ParentResult {
+	return ParentResult{
+		children: children,
+		summary:  summary,
+		matched:  matched,
+	}
+}
+
+func (pr ParentResult) Matched() bool {
+	return pr.matched
+}
+
+func (pr ParentResult) String() string {
+	matchedPart := matchChar(pr.matched)
+	var sb strings.Builder
+	sb.WriteString(fmt.Sprintf("%s %s", matchedPart, pr.summary))
+	prefix := fmt.Sprintf("\n%s   ", matchedPart)
+	for _, child := range pr.children {
+		sb.WriteString(prefix)
+		sb.WriteString(strings.ReplaceAll(child.String(), "\n", prefix))
+	}
+	return sb.String()
 }
