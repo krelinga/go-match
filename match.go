@@ -1,6 +1,7 @@
 package match
 
 import (
+	"cmp"
 	"fmt"
 	"strings"
 )
@@ -87,6 +88,71 @@ func Equal[T comparable](want T) *LeafMatcher[T] {
 				Name:    "Equal",
 				Match:   got == want,
 				Message: fmt.Sprintf("Expected %s == %s", lm.format(got), lm.format(want)),
+			}
+		},
+		want: want,
+	}
+}
+
+func NotEqual[T comparable](want T) *LeafMatcher[T] {
+	return &LeafMatcher[T]{
+		fn: func(lm *LeafMatcher[T], got T) *Result {
+			return &Result{
+				Name:    "NotEqual",
+				Match:   got != want,
+				Message: fmt.Sprintf("Expected %s != %s", lm.format(got), lm.format(want)),
+			}
+		},
+		want: want,
+	}
+}
+
+func LessThan[T cmp.Ordered](want T) *LeafMatcher[T] {
+	return &LeafMatcher[T]{
+		fn: func(lm *LeafMatcher[T], got T) *Result {
+			return &Result{
+				Name:    "LessThan",
+				Match:   got < want,
+				Message: fmt.Sprintf("Expected %s < %s", lm.format(got), lm.format(want)),
+			}
+		},
+		want: want,
+	}
+}
+
+func GreaterThan[T cmp.Ordered](want T) *LeafMatcher[T] {
+	return &LeafMatcher[T]{
+		fn: func(lm *LeafMatcher[T], got T) *Result {
+			return &Result{
+				Name:    "GreaterThan",
+				Match:   got > want,
+				Message: fmt.Sprintf("Expected %s > %s", lm.format(got), lm.format(want)),
+			}
+		},
+		want: want,
+	}
+}
+
+func LessThanOrEqual[T cmp.Ordered](want T) *LeafMatcher[T] {
+	return &LeafMatcher[T]{
+		fn: func(lm *LeafMatcher[T], got T) *Result {
+			return &Result{
+				Name:    "LessThanOrEqual",
+				Match:   got <= want,
+				Message: fmt.Sprintf("Expected %s <= %s", lm.format(got), lm.format(want)),
+			}
+		},
+		want: want,
+	}
+}
+
+func GreaterThanOrEqual[T cmp.Ordered](want T) *LeafMatcher[T] {
+	return &LeafMatcher[T]{
+		fn: func(lm *LeafMatcher[T], got T) *Result {
+			return &Result{
+				Name:    "GreaterThanOrEqual",
+				Match:   got >= want,
+				Message: fmt.Sprintf("Expected %s >= %s", lm.format(got), lm.format(want)),
 			}
 		},
 		want: want,
