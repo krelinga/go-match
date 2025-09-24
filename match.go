@@ -197,9 +197,10 @@ func (pr ParentResult) String() string {
 	matchedPart := matchChar(pr.matched)
 	var sb strings.Builder
 	sb.WriteString(fmt.Sprintf("%s %s", matchedPart, pr.summary))
-	prefix := fmt.Sprintf("\n%s   ", matchedPart)
+	prefix := fmt.Sprintf("\n%s     ", matchedPart)
+	header := fmt.Sprintf("\n%s   * ", matchedPart)
 	for _, child := range pr.children {
-		sb.WriteString(prefix)
+		sb.WriteString(header)
 		sb.WriteString(strings.ReplaceAll(child.String(), "\n", prefix))
 	}
 	return sb.String()
