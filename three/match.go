@@ -18,7 +18,11 @@ type Result struct {
 	Matched   bool
 }
 
-func NewResult[T any](got T, matcher Matcher[T]) Result {
+func Match[T any](got T, matcher Matcher[T]) bool {
+	return matcher.Match(got)
+}
+
+func MatchResult[T any](got T, matcher Matcher[T]) Result {
 	result := Result{
 		Condition: matcher.Condition(got),
 		Matched:   matcher.Match(got),
@@ -34,10 +38,10 @@ type Child struct {
 	Result Result
 }
 
-func NewChild[T any](name string, got T, matcher Matcher[T]) Child {
+func MatchChild[T any](name string, got T, matcher Matcher[T]) Child {
 	return Child{
 		Name:   name,
-		Result: NewResult(got, matcher),
+		Result: MatchResult(got, matcher),
 	}
 }
 
@@ -107,7 +111,7 @@ func (aom allOfMatcher[T]) Condition(_ T) string {
 func (aom allOfMatcher[T]) Children(got T) Children {
 	children := make([]Child, len(aom.matchers))
 	for i, matcher := range aom.matchers {
-		children[i] = NewChild(fmt.Sprintf("child %d", i), got, matcher)
+		children[i] = MatchChild(fmt.Sprintf("child %d", i), got, matcher)
 	}
 	return Children{Direct: children}
 }
@@ -136,7 +140,7 @@ func (aom anyOfMatcher[T]) Condition(_ T) string {
 func (aom anyOfMatcher[T]) Children(got T) Children {
 	children := make([]Child, len(aom.matchers))
 	for i, matcher := range aom.matchers {
-		children[i] = NewChild(fmt.Sprintf("child %d", i), got, matcher)
+		children[i] = MatchChild(fmt.Sprintf("child %d", i), got, matcher)
 	}
 	return Children{Direct: children}
 }
@@ -165,7 +169,7 @@ func (dm derefMatcher[T]) Children(got *T) Children {
 		return Children{}
 	}
 	return Children{
-		Direct: []Child{NewChild("dereferenced", *got, dm.matcher)},
+		Direct: []Child{MatchChild("dereferenced", *got, dm.matcher)},
 	}
 }
 
