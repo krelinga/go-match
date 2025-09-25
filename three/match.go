@@ -55,36 +55,57 @@ type NestedChildren struct {
 	Children
 }
 
-func Equal[T comparable](want T) Matcher[T] {
-	return equalMatcher[T]{want: want}
+type Format[T any] func(got T) string
+
+func (ff Format[T]) Format(in T) string {
+	if ff != nil {
+		return ff(in)
+	}
+	return fmt.Sprintf("%v", in)
 }
 
-type equalMatcher[T comparable] struct {
+func Equal[T comparable](want T) *EqualMatcher[T] {
+	return &EqualMatcher[T]{want: want}
+}
+
+type EqualMatcher[T comparable] struct {
 	want T
+	f    Format[T]
 }
 
-func (em equalMatcher[T]) Match(got T) bool {
+func (em *EqualMatcher[T]) Match(got T) bool {
 	return got == em.want
 }
 
-func (em equalMatcher[T]) Condition(got T) string {
-	return fmt.Sprintf("%v == %v", got, em.want)
+func (em *EqualMatcher[T]) Condition(got T) string {
+	return fmt.Sprintf("%s == %s", em.f.Format(got), em.f.Format(em.want))
 }
 
-func NotEqual[T comparable](want T) Matcher[T] {
-	return notEqualMatcher[T]{want: want}
+func (em *EqualMatcher[T]) WithFormat(f Format[T]) *EqualMatcher[T] {
+	em.f = f
+	return em
 }
 
-type notEqualMatcher[T comparable] struct {
+func NotEqual[T comparable](want T) *NotEqualMatcher[T] {
+	return &NotEqualMatcher[T]{want: want}
+}
+
+type NotEqualMatcher[T comparable] struct {
 	want T
+	f    Format[T]
 }
 
-func (nem notEqualMatcher[T]) Match(got T) bool {
+func (nem *NotEqualMatcher[T]) Match(got T) bool {
 	return got != nem.want
 }
 
-func (nem notEqualMatcher[T]) Condition(got T) string {
-	return fmt.Sprintf("%v != %v", got, nem.want)
+func (nem *NotEqualMatcher[T]) Condition(got T) string {
+	return fmt.Sprintf("%s != %s", nem.f.Format(got), nem.f.Format(nem.want))
+}
+
+func (nem *NotEqualMatcher[T]) WithFormat(f Format[T]) *NotEqualMatcher[T] {
+	nem.f = f
+	return nem
 }
 
 func AllOf[T any](matchers ...Matcher[T]) Matcher[T] {
@@ -173,26 +194,32 @@ func (dm derefMatcher[T]) Children(got *T) Children {
 	}
 }
 
-func PointerEqual[T comparable](want *T) Matcher[*T] {
-	return pointerEqualMatcher[T]{want: want}
+func PointerEqual[T comparable](want *T) *PointerEqualMatcher[T] {
+	return &PointerEqualMatcher[T]{want: want}
 }
 
-type pointerEqualMatcher[T comparable] struct {
+type PointerEqualMatcher[T comparable] struct {
 	want *T
+	f    Format[T]
 }
 
-func (pem pointerEqualMatcher[T]) Match(got *T) bool {
+func (pem *PointerEqualMatcher[T]) Match(got *T) bool {
 	if pem.want == nil || got == nil {
 		return pem.want == got
 	}
 	return *pem.want == *got
 }
 
-func (pem pointerEqualMatcher[T]) Condition(_ *T) string {
+func (pem *PointerEqualMatcher[T]) Condition(_ *T) string {
 	if pem.want == nil {
 		return "== nil"
 	}
-	return fmt.Sprintf("== %v", *pem.want)
+	return fmt.Sprintf("== %v", pem.f.Format(*pem.want))
+}
+
+func (pem *PointerEqualMatcher[T]) WithFormat(f Format[T]) *PointerEqualMatcher[T] {
+	pem.f = f
+	return pem
 }
 
 func Elements[T any](matchers ...Matcher[T]) *ElementsMatcher[T] {
