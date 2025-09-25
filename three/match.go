@@ -7,8 +7,7 @@ type Matcher[T any] interface {
 	Condition(got T) string
 }
 
-type ParentMatcher[T any] interface {
-	Matcher[T]
+type Parent[T any] interface {
 	Children(got T) Children
 }
 
@@ -27,7 +26,7 @@ func MatchResult[T any](got T, matcher Matcher[T]) Result {
 		Condition: matcher.Condition(got),
 		Matched:   matcher.Match(got),
 	}
-	if pm, ok := matcher.(ParentMatcher[T]); ok {
+	if pm, ok := matcher.(Parent[T]); ok {
 		result.Children = pm.Children(got)
 	}
 	return result
