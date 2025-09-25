@@ -7,6 +7,50 @@ type Matcher[T any] interface {
 	Condition(got T) string
 }
 
+type ParentMatcher[T any] interface {
+	Matcher[T]
+	Children(got T) Children
+}
+
+type Result struct {
+	Condition string
+	Children  Children
+	Matched   bool
+}
+
+func NewResult[T any](got T, matcher Matcher[T]) Result {
+	result := Result{
+		Condition: matcher.Condition(got),
+		Matched:   matcher.Match(got),
+	}
+	if pm, ok := matcher.(ParentMatcher[T]); ok {
+		result.Children = pm.Children(got)
+	}
+	return result
+}
+
+type Child struct {
+	Name   string
+	Result Result
+}
+
+func NewChild[T any](name string, got T, matcher Matcher[T]) Child {
+	return Child{
+		Name:   name,
+		Result: NewResult(got, matcher),
+	}
+}
+
+type Children struct {
+	Direct []Child
+	Nested []NestedChildren
+}
+
+type NestedChildren struct {
+	Category string
+	Children
+}
+
 func Equal[T comparable](want T) Matcher[T] {
 	return equalMatcher[T]{want: want}
 }
@@ -60,6 +104,14 @@ func (aom allOfMatcher[T]) Condition(_ T) string {
 	return "all children match"
 }
 
+func (aom allOfMatcher[T]) Children(got T) Children {
+	children := make([]Child, len(aom.matchers))
+	for i, matcher := range aom.matchers {
+		children[i] = NewChild(fmt.Sprintf("child %d", i), got, matcher)
+	}
+	return Children{Direct: children}
+}
+
 func AnyOf[T any](matchers ...Matcher[T]) Matcher[T] {
 	return anyOfMatcher[T]{matchers: matchers}
 }
@@ -81,6 +133,14 @@ func (aom anyOfMatcher[T]) Condition(_ T) string {
 	return "any child matches"
 }
 
+func (aom anyOfMatcher[T]) Children(got T) Children {
+	children := make([]Child, len(aom.matchers))
+	for i, matcher := range aom.matchers {
+		children[i] = NewChild(fmt.Sprintf("child %d", i), got, matcher)
+	}
+	return Children{Direct: children}
+}
+
 func Deref[T any](matcher Matcher[T]) Matcher[*T] {
 	return derefMatcher[T]{matcher: matcher}
 }
@@ -98,6 +158,15 @@ func (dm derefMatcher[T]) Match(got *T) bool {
 
 func (dm derefMatcher[T]) Condition(_ *T) string {
 	return "dereferenced pointer matches"
+}
+
+func (dm derefMatcher[T]) Children(got *T) Children {
+	if got == nil {
+		return Children{}
+	}
+	return Children{
+		Direct: []Child{NewChild("dereferenced", *got, dm.matcher)},
+	}
 }
 
 func PointerEqual[T comparable](want *T) Matcher[*T] {
@@ -148,6 +217,8 @@ func (em *ElementsMatcher[T]) Match(got []T) bool {
 	}
 	return em.matchOrdered(got)
 }
+
+// TODO: support Children() on ElementsMatcher.
 
 func (em *ElementsMatcher[T]) matchOrdered(got []T) bool {
 	for i, matcher := range em.matchers {
