@@ -19,7 +19,7 @@ type Unwrapper[T any] interface {
 
 type Result struct {
 	MatcherType string
-	Headline    string
+	Explanation    string
 	Unwrapped   *ResultTree
 	Matched     bool
 }
@@ -34,7 +34,7 @@ func MatchResult[T any](got T, matcher Matcher[T]) Result {
 		Matched:     matcher.Match(got),
 	}
 	if cm, ok := matcher.(Explainer[T]); ok {
-		result.Headline = fmt.Sprintf("expected %s", cm.Explain(got))
+		result.Explanation = cm.Explain(got)
 	}
 	if pm, ok := matcher.(Unwrapper[T]); ok {
 		result.Unwrapped = pm.Unwrap(got)
