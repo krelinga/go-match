@@ -18,9 +18,10 @@ type Unwrapper[T any] interface {
 }
 
 type Result struct {
-	Headline  string
-	Unwrapped *ResultTree
-	Matched   bool
+	MatcherType string
+	Headline    string
+	Unwrapped   *ResultTree
+	Matched     bool
 }
 
 func Match[T any](got T, matcher Matcher[T]) bool {
@@ -29,12 +30,11 @@ func Match[T any](got T, matcher Matcher[T]) bool {
 
 func MatchResult[T any](got T, matcher Matcher[T]) Result {
 	result := Result{
-		Matched: matcher.Match(got),
+		MatcherType: reflect.TypeOf(matcher).String(),
+		Matched:     matcher.Match(got),
 	}
 	if cm, ok := matcher.(Explainer[T]); ok {
 		result.Headline = fmt.Sprintf("expected %s", cm.Explain(got))
-	} else {
-		result.Headline = reflect.TypeOf(matcher).String()
 	}
 	if pm, ok := matcher.(Unwrapper[T]); ok {
 		result.Unwrapped = pm.Unwrap(got)
@@ -79,7 +79,7 @@ func Equal[T comparable](want T) *EqualMatcher[T] {
 
 type EqualMatcher[T comparable] struct {
 	want T
-	fh    FormatHelper[T]
+	fh   FormatHelper[T]
 }
 
 func (em *EqualMatcher[T]) Match(got T) bool {
