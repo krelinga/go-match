@@ -19,7 +19,7 @@ type Unwrapper[T any] interface {
 
 type Result struct {
 	MatcherType string
-	Explanation    string
+	Explanation string
 	Unwrapped   *ResultTree
 	Matched     bool
 }
