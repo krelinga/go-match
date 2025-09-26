@@ -1,9 +1,15 @@
 package match
 
-import "fmt"
+import (
+	"fmt"
+	"reflect"
+)
 
 type Matcher[T any] interface {
 	Match(got T) bool
+}
+
+type Conditioner[T any] interface {
 	Condition(got T) string
 }
 
@@ -12,7 +18,7 @@ type Parent[T any] interface {
 }
 
 type Result struct {
-	Condition string
+	Headline string
 	Children  Children
 	Matched   bool
 }
@@ -23,8 +29,12 @@ func Match[T any](got T, matcher Matcher[T]) bool {
 
 func MatchResult[T any](got T, matcher Matcher[T]) Result {
 	result := Result{
-		Condition: matcher.Condition(got),
 		Matched:   matcher.Match(got),
+	}
+	if cm, ok := matcher.(Conditioner[T]); ok {
+		result.Headline = fmt.Sprintf("expected %s", cm.Condition(got))
+	} else {
+		result.Headline = reflect.TypeOf(matcher).String()
 	}
 	if pm, ok := matcher.(Parent[T]); ok {
 		result.Children = pm.Children(got)
@@ -290,4 +300,60 @@ func Slice[T any](want []T, factory func(t T) Matcher[T]) Matcher[[]T] {
 		matchers[i] = factory(w)
 	}
 	return Elements(matchers...)
+}
+
+func AsAny[T any](matcher Matcher[T]) Matcher[any] {
+	return anyMatcher[T]{matcher: matcher}
+}
+
+type anyMatcher[T any] struct {
+	matcher Matcher[T]
+}
+
+func (am anyMatcher[T]) Match(got any) bool {
+	t, ok := got.(T)
+	if !ok {
+		return false
+	}
+	return am.matcher.Match(t)
+}
+
+func TypeName[T any]() string {
+	return reflect.TypeFor[T]().Name()
+}
+
+func (am anyMatcher[T]) Condition(got any) string {
+	return fmt.Sprintf("type %s", TypeName[T]())
+}
+
+func (am anyMatcher[T]) Children(got any) Children {
+	t, ok := got.(T)
+	if !ok {
+		return Children{}
+	}
+	return Children{
+		Direct: []Child{MatchChild(fmt.Sprintf("%s type", TypeName[T]()), t, am.matcher)},
+	}
+}
+
+func AsType[T any](matcher Matcher[any]) Matcher[T] {
+	return typeMatcher[T]{matcher: matcher}
+}
+
+type typeMatcher[T any] struct {
+	matcher Matcher[any]
+}
+
+func (tm typeMatcher[T]) Match(got T) bool {
+	return tm.matcher.Match(got)
+}
+
+func (tm typeMatcher[T]) Condition(_ T) string {
+	return "any type"
+}
+
+func (tm typeMatcher[T]) Children(got T) Children {
+	return Children{
+		Direct: []Child{MatchChild("any type", any(got), tm.matcher)},
+	}
 }
