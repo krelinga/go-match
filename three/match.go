@@ -13,14 +13,14 @@ type Explainer[T any] interface {
 	Explain(got T) string
 }
 
-type Parent[T any] interface {
-	Children(got T) ResultTree
+type Unwrapper[T any] interface {
+	Unwrap(got T) ResultTree
 }
 
 type Result struct {
-	Headline string
-	Children ResultTree
-	Matched  bool
+	Headline  string
+	Unwrapped ResultTree
+	Matched   bool
 }
 
 func Match[T any](got T, matcher Matcher[T]) bool {
@@ -36,8 +36,8 @@ func MatchResult[T any](got T, matcher Matcher[T]) Result {
 	} else {
 		result.Headline = reflect.TypeOf(matcher).String()
 	}
-	if pm, ok := matcher.(Parent[T]); ok {
-		result.Children = pm.Children(got)
+	if pm, ok := matcher.(Unwrapper[T]); ok {
+		result.Unwrapped = pm.Unwrap(got)
 	}
 	return result
 }
@@ -126,7 +126,7 @@ func (aom allOfMatcher[T]) Explain(_ T) string {
 	return "all children match"
 }
 
-func (aom allOfMatcher[T]) Children(got T) ResultTree {
+func (aom allOfMatcher[T]) Unwrap(got T) ResultTree {
 	return fanOutMatcherChildren(got, aom.matchers)
 }
 
@@ -166,7 +166,7 @@ func (aom anyOfMatcher[T]) Explain(_ T) string {
 	return "any child matches"
 }
 
-func (aom anyOfMatcher[T]) Children(got T) ResultTree {
+func (aom anyOfMatcher[T]) Unwrap(got T) ResultTree {
 	return fanOutMatcherChildren(got, aom.matchers)
 }
 
@@ -189,7 +189,7 @@ func (dm derefMatcher[T]) Explain(_ *T) string {
 	return "dereferenced pointer matches"
 }
 
-func (dm derefMatcher[T]) Children(got *T) ResultTree {
+func (dm derefMatcher[T]) Unwrap(got *T) ResultTree {
 	rt := ResultTree{}
 	if got == nil {
 		return rt
@@ -253,7 +253,7 @@ func (em *ElementsMatcher[T]) Match(got []T) bool {
 	return em.matchOrdered(got)
 }
 
-// TODO: support Children() on ElementsMatcher.
+// TODO: support Unwrap() on ElementsMatcher.
 
 func (em *ElementsMatcher[T]) matchOrdered(got []T) bool {
 	for i, matcher := range em.matchers {
@@ -321,7 +321,7 @@ func (am anyMatcher[T]) Explain(got any) string {
 	return fmt.Sprintf("type %s", TypeName[T]())
 }
 
-func (am anyMatcher[T]) Children(got any) ResultTree {
+func (am anyMatcher[T]) Unwrap(got any) ResultTree {
 	t, ok := got.(T)
 	if !ok {
 		return ResultTree{}
@@ -347,7 +347,7 @@ func (tm typeMatcher[T]) Explain(_ T) string {
 	return "any type"
 }
 
-func (tm typeMatcher[T]) Children(got T) ResultTree {
+func (tm typeMatcher[T]) Unwrap(got T) ResultTree {
 	return ResultTree{
 		Root: []Result{MatchResult(any(got), tm.matcher)},
 	}
