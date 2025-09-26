@@ -14,13 +14,13 @@ type Explainer[T any] interface {
 }
 
 type Parent[T any] interface {
-	Children(got T) Children
+	Children(got T) ResultTree
 }
 
 type Result struct {
 	Headline string
-	Children  Children
-	Matched   bool
+	Children ResultTree
+	Matched  bool
 }
 
 func Match[T any](got T, matcher Matcher[T]) bool {
@@ -29,7 +29,7 @@ func Match[T any](got T, matcher Matcher[T]) bool {
 
 func MatchResult[T any](got T, matcher Matcher[T]) Result {
 	result := Result{
-		Matched:   matcher.Match(got),
+		Matched: matcher.Match(got),
 	}
 	if cm, ok := matcher.(Explainer[T]); ok {
 		result.Headline = fmt.Sprintf("expected %s", cm.Explain(got))
@@ -42,26 +42,14 @@ func MatchResult[T any](got T, matcher Matcher[T]) Result {
 	return result
 }
 
-type Child struct {
-	Name   string
-	Result Result
+type ResultTree struct {
+	Root     []Result
+	Branches []ResultBranch
 }
 
-func MatchChild[T any](name string, got T, matcher Matcher[T]) Child {
-	return Child{
-		Name:   name,
-		Result: MatchResult(got, matcher),
-	}
-}
-
-type Children struct {
-	Direct []Child
-	Grouped []GroupedChildren
-}
-
-type GroupedChildren struct {
-	Group string
-	Children
+type ResultBranch struct {
+	Name string
+	ResultTree
 }
 
 type Format[T any] func(got T) string
@@ -138,12 +126,23 @@ func (aom allOfMatcher[T]) Explain(_ T) string {
 	return "all children match"
 }
 
-func (aom allOfMatcher[T]) Children(got T) Children {
-	children := make([]Child, len(aom.matchers))
-	for i, matcher := range aom.matchers {
-		children[i] = MatchChild(fmt.Sprintf("child %d", i), got, matcher)
+func (aom allOfMatcher[T]) Children(got T) ResultTree {
+	return fanOutMatcherChildren(got, aom.matchers)
+}
+
+func fanOutMatcherChildren[T any](got T, matchers []Matcher[T]) ResultTree {
+	rt := ResultTree{
+		Branches: make([]ResultBranch, len(matchers)),
 	}
-	return Children{Direct: children}
+	for i, matcher := range matchers {
+		rt.Branches[i] = ResultBranch{
+			Name: fmt.Sprintf("index %d", i),
+			ResultTree: ResultTree{
+				Root: []Result{MatchResult(got, matcher)},
+			},
+		}
+	}
+	return rt
 }
 
 func AnyOf[T any](matchers ...Matcher[T]) Matcher[T] {
@@ -167,12 +166,8 @@ func (aom anyOfMatcher[T]) Explain(_ T) string {
 	return "any child matches"
 }
 
-func (aom anyOfMatcher[T]) Children(got T) Children {
-	children := make([]Child, len(aom.matchers))
-	for i, matcher := range aom.matchers {
-		children[i] = MatchChild(fmt.Sprintf("child %d", i), got, matcher)
-	}
-	return Children{Direct: children}
+func (aom anyOfMatcher[T]) Children(got T) ResultTree {
+	return fanOutMatcherChildren(got, aom.matchers)
 }
 
 func Deref[T any](matcher Matcher[T]) Matcher[*T] {
@@ -194,13 +189,13 @@ func (dm derefMatcher[T]) Explain(_ *T) string {
 	return "dereferenced pointer matches"
 }
 
-func (dm derefMatcher[T]) Children(got *T) Children {
+func (dm derefMatcher[T]) Children(got *T) ResultTree {
+	rt := ResultTree{}
 	if got == nil {
-		return Children{}
+		return rt
 	}
-	return Children{
-		Direct: []Child{MatchChild("dereferenced", *got, dm.matcher)},
-	}
+	rt.Root = []Result{MatchResult(*got, dm.matcher)}
+	return rt
 }
 
 func PointerEqual[T comparable](want *T) *PointerEqualMatcher[T] {
@@ -326,13 +321,13 @@ func (am anyMatcher[T]) Explain(got any) string {
 	return fmt.Sprintf("type %s", TypeName[T]())
 }
 
-func (am anyMatcher[T]) Children(got any) Children {
+func (am anyMatcher[T]) Children(got any) ResultTree {
 	t, ok := got.(T)
 	if !ok {
-		return Children{}
+		return ResultTree{}
 	}
-	return Children{
-		Direct: []Child{MatchChild(fmt.Sprintf("%s type", TypeName[T]()), t, am.matcher)},
+	return ResultTree{
+		Root: []Result{MatchResult(t, am.matcher)},
 	}
 }
 
@@ -352,8 +347,8 @@ func (tm typeMatcher[T]) Explain(_ T) string {
 	return "any type"
 }
 
-func (tm typeMatcher[T]) Children(got T) Children {
-	return Children{
-		Direct: []Child{MatchChild("any type", any(got), tm.matcher)},
+func (tm typeMatcher[T]) Children(got T) ResultTree {
+	return ResultTree{
+		Root: []Result{MatchResult(any(got), tm.matcher)},
 	}
 }
