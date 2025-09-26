@@ -56,11 +56,11 @@ func MatchChild[T any](name string, got T, matcher Matcher[T]) Child {
 
 type Children struct {
 	Direct []Child
-	Nested []NestedChildren
+	Grouped []GroupedChildren
 }
 
-type NestedChildren struct {
-	Category string
+type GroupedChildren struct {
+	Group string
 	Children
 }
 
