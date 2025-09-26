@@ -47,6 +47,12 @@ type ResultTree struct {
 	Branches []ResultBranch
 }
 
+func NewResultTreeRoot(results ...Result) *ResultTree {
+	return &ResultTree{
+		Root: results,
+	}
+}
+
 type ResultBranch struct {
 	Name string
 	ResultTree
@@ -196,9 +202,7 @@ func (dm derefMatcher[T]) Unwrap(got *T) *ResultTree {
 	if got == nil {
 		return nil
 	}
-	return &ResultTree{
-		Root: []Result{MatchResult(*got, dm.matcher)},
-	}
+	return NewResultTreeRoot(MatchResult(*got, dm.matcher))
 }
 
 func PointerEqual[T comparable](want *T) *PointerEqualMatcher[T] {
@@ -329,9 +333,7 @@ func (am anyMatcher[T]) Unwrap(got any) *ResultTree {
 	if !ok {
 		return nil
 	}
-	return &ResultTree{
-		Root: []Result{MatchResult(t, am.matcher)},
-	}
+	return NewResultTreeRoot(MatchResult(t, am.matcher))
 }
 
 func AsType[T any](matcher Matcher[any]) Matcher[T] {
@@ -351,7 +353,5 @@ func (tm typeMatcher[T]) Explain(_ T) string {
 }
 
 func (tm typeMatcher[T]) Unwrap(got T) *ResultTree {
-	return &ResultTree{
-		Root: []Result{MatchResult(any(got), tm.matcher)},
-	}
+	return NewResultTreeRoot(MatchResult(any(got), tm.matcher))
 }
