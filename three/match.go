@@ -58,13 +58,19 @@ type ResultBranch struct {
 	ResultTree
 }
 
-type Format[T any] func(got T) string
+type FormatHelper[T any] struct {
+	ff func(t T) string
+}
 
-func (ff Format[T]) Format(in T) string {
-	if ff != nil {
-		return ff(in)
+func (fh *FormatHelper[T]) Format(t T) string {
+	if fh.ff != nil {
+		return fh.ff(t)
 	}
-	return fmt.Sprintf("%v", in)
+	return fmt.Sprintf("%v", t)
+}
+
+func (fh *FormatHelper[T]) Set(ff func(t T) string) {
+	fh.ff = ff
 }
 
 func Equal[T comparable](want T) *EqualMatcher[T] {
@@ -73,7 +79,7 @@ func Equal[T comparable](want T) *EqualMatcher[T] {
 
 type EqualMatcher[T comparable] struct {
 	want T
-	f    Format[T]
+	fh    FormatHelper[T]
 }
 
 func (em *EqualMatcher[T]) Match(got T) bool {
@@ -81,11 +87,11 @@ func (em *EqualMatcher[T]) Match(got T) bool {
 }
 
 func (em *EqualMatcher[T]) Explain(got T) string {
-	return fmt.Sprintf("%s == %s", em.f.Format(got), em.f.Format(em.want))
+	return fmt.Sprintf("%s == %s", em.fh.Format(got), em.fh.Format(em.want))
 }
 
-func (em *EqualMatcher[T]) WithFormat(f Format[T]) *EqualMatcher[T] {
-	em.f = f
+func (em *EqualMatcher[T]) WithFormat(f func(t T) string) *EqualMatcher[T] {
+	em.fh.Set(f)
 	return em
 }
 
@@ -95,7 +101,7 @@ func NotEqual[T comparable](want T) *NotEqualMatcher[T] {
 
 type NotEqualMatcher[T comparable] struct {
 	want T
-	f    Format[T]
+	fh   FormatHelper[T]
 }
 
 func (nem *NotEqualMatcher[T]) Match(got T) bool {
@@ -103,11 +109,11 @@ func (nem *NotEqualMatcher[T]) Match(got T) bool {
 }
 
 func (nem *NotEqualMatcher[T]) Explain(got T) string {
-	return fmt.Sprintf("%s != %s", nem.f.Format(got), nem.f.Format(nem.want))
+	return fmt.Sprintf("%s != %s", nem.fh.Format(got), nem.fh.Format(nem.want))
 }
 
-func (nem *NotEqualMatcher[T]) WithFormat(f Format[T]) *NotEqualMatcher[T] {
-	nem.f = f
+func (nem *NotEqualMatcher[T]) WithFormat(f func(t T) string) *NotEqualMatcher[T] {
+	nem.fh.Set(f)
 	return nem
 }
 
@@ -211,7 +217,7 @@ func PointerEqual[T comparable](want *T) *PointerEqualMatcher[T] {
 
 type PointerEqualMatcher[T comparable] struct {
 	want *T
-	f    Format[T]
+	fh   FormatHelper[T]
 }
 
 func (pem *PointerEqualMatcher[T]) Match(got *T) bool {
@@ -225,11 +231,11 @@ func (pem *PointerEqualMatcher[T]) Explain(_ *T) string {
 	if pem.want == nil {
 		return "== nil"
 	}
-	return fmt.Sprintf("== %v", pem.f.Format(*pem.want))
+	return fmt.Sprintf("== %v", pem.fh.Format(*pem.want))
 }
 
-func (pem *PointerEqualMatcher[T]) WithFormat(f Format[T]) *PointerEqualMatcher[T] {
-	pem.f = f
+func (pem *PointerEqualMatcher[T]) WithFormat(f func(t T) string) *PointerEqualMatcher[T] {
+	pem.fh.Set(f)
 	return pem
 }
 
