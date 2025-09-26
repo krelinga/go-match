@@ -9,8 +9,8 @@ type Matcher[T any] interface {
 	Match(got T) bool
 }
 
-type Conditioner[T any] interface {
-	Condition(got T) string
+type Explainer[T any] interface {
+	Explain(got T) string
 }
 
 type Parent[T any] interface {
@@ -31,8 +31,8 @@ func MatchResult[T any](got T, matcher Matcher[T]) Result {
 	result := Result{
 		Matched:   matcher.Match(got),
 	}
-	if cm, ok := matcher.(Conditioner[T]); ok {
-		result.Headline = fmt.Sprintf("expected %s", cm.Condition(got))
+	if cm, ok := matcher.(Explainer[T]); ok {
+		result.Headline = fmt.Sprintf("expected %s", cm.Explain(got))
 	} else {
 		result.Headline = reflect.TypeOf(matcher).String()
 	}
@@ -86,7 +86,7 @@ func (em *EqualMatcher[T]) Match(got T) bool {
 	return got == em.want
 }
 
-func (em *EqualMatcher[T]) Condition(got T) string {
+func (em *EqualMatcher[T]) Explain(got T) string {
 	return fmt.Sprintf("%s == %s", em.f.Format(got), em.f.Format(em.want))
 }
 
@@ -108,7 +108,7 @@ func (nem *NotEqualMatcher[T]) Match(got T) bool {
 	return got != nem.want
 }
 
-func (nem *NotEqualMatcher[T]) Condition(got T) string {
+func (nem *NotEqualMatcher[T]) Explain(got T) string {
 	return fmt.Sprintf("%s != %s", nem.f.Format(got), nem.f.Format(nem.want))
 }
 
@@ -134,7 +134,7 @@ func (aom allOfMatcher[T]) Match(got T) bool {
 	return true
 }
 
-func (aom allOfMatcher[T]) Condition(_ T) string {
+func (aom allOfMatcher[T]) Explain(_ T) string {
 	return "all children match"
 }
 
@@ -163,7 +163,7 @@ func (aom anyOfMatcher[T]) Match(got T) bool {
 	return false
 }
 
-func (aom anyOfMatcher[T]) Condition(_ T) string {
+func (aom anyOfMatcher[T]) Explain(_ T) string {
 	return "any child matches"
 }
 
@@ -190,7 +190,7 @@ func (dm derefMatcher[T]) Match(got *T) bool {
 	return dm.matcher.Match(*got)
 }
 
-func (dm derefMatcher[T]) Condition(_ *T) string {
+func (dm derefMatcher[T]) Explain(_ *T) string {
 	return "dereferenced pointer matches"
 }
 
@@ -219,7 +219,7 @@ func (pem *PointerEqualMatcher[T]) Match(got *T) bool {
 	return *pem.want == *got
 }
 
-func (pem *PointerEqualMatcher[T]) Condition(_ *T) string {
+func (pem *PointerEqualMatcher[T]) Explain(_ *T) string {
 	if pem.want == nil {
 		return "== nil"
 	}
@@ -287,7 +287,7 @@ func (em *ElementsMatcher[T]) matchUnordered(got []T) bool {
 	return true
 }
 
-func (em *ElementsMatcher[T]) Condition(_ []T) string {
+func (em *ElementsMatcher[T]) Explain(_ []T) string {
 	if em.unordered {
 		return "elements match (unordered)"
 	}
@@ -322,7 +322,7 @@ func TypeName[T any]() string {
 	return reflect.TypeFor[T]().Name()
 }
 
-func (am anyMatcher[T]) Condition(got any) string {
+func (am anyMatcher[T]) Explain(got any) string {
 	return fmt.Sprintf("type %s", TypeName[T]())
 }
 
@@ -348,7 +348,7 @@ func (tm typeMatcher[T]) Match(got T) bool {
 	return tm.matcher.Match(got)
 }
 
-func (tm typeMatcher[T]) Condition(_ T) string {
+func (tm typeMatcher[T]) Explain(_ T) string {
 	return "any type"
 }
 
