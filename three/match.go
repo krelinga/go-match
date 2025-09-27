@@ -3,6 +3,7 @@ package match
 import (
 	"fmt"
 	"reflect"
+	"strings"
 )
 
 type Matcher[T any] interface {
@@ -10,7 +11,7 @@ type Matcher[T any] interface {
 }
 
 type Explainer[T any] interface {
-	Explain(got T) string
+	Explain(matched bool, got T) string
 }
 
 type Unwrapper[T any] interface {
@@ -34,7 +35,7 @@ func MatchResult[T any](got T, matcher Matcher[T]) Result {
 		Matched:     matcher.Match(got),
 	}
 	if cm, ok := matcher.(Explainer[T]); ok {
-		result.Explanation = cm.Explain(got)
+		result.Explanation = cm.Explain(result.Matched, got)
 	}
 	if pm, ok := matcher.(Unwrapper[T]); ok {
 		result.Unwrapped = pm.Unwrap(got)
@@ -73,6 +74,19 @@ func (fh *FormatHelper[T]) Set(ff func(t T) string) {
 	fh.ff = ff
 }
 
+func ActualVsExpected(matched bool, actual, expected string) string {
+	if matched {
+		return expected
+	}
+	sb := &strings.Builder{}
+	sb.WriteString("ACTUAL  : ")
+	sb.WriteString(actual)
+	sb.WriteString("\n")
+	sb.WriteString("EXPECTED: ")
+	sb.WriteString(expected)
+	return sb.String()
+}
+
 func Equal[T comparable](want T) *EqualMatcher[T] {
 	return &EqualMatcher[T]{want: want}
 }
@@ -86,8 +100,10 @@ func (em *EqualMatcher[T]) Match(got T) bool {
 	return got == em.want
 }
 
-func (em *EqualMatcher[T]) Explain(got T) string {
-	return fmt.Sprintf("%s == %s", em.fh.Format(got), em.fh.Format(em.want))
+func (em *EqualMatcher[T]) Explain(matched bool, got T) string {
+	actual := fmt.Sprintf("got = %s", em.fh.Format(got))
+	expected := fmt.Sprintf("got = %s", em.fh.Format(em.want))
+	return ActualVsExpected(matched, actual, expected)
 }
 
 func (em *EqualMatcher[T]) WithFormat(f func(t T) string) *EqualMatcher[T] {
@@ -108,7 +124,11 @@ func (nem *NotEqualMatcher[T]) Match(got T) bool {
 	return got != nem.want
 }
 
-func (nem *NotEqualMatcher[T]) Explain(got T) string {
+func (nem *NotEqualMatcher[T]) Explain(matched bool, got T) string {
+	expected := fmt.Sprintf("got != %s", nem.fh.Format(nem.want))
+	if matched {
+		return expected
+	}
 	return fmt.Sprintf("%s != %s", nem.fh.Format(got), nem.fh.Format(nem.want))
 }
 
@@ -134,8 +154,10 @@ func (aom allOfMatcher[T]) Match(got T) bool {
 	return true
 }
 
-func (aom allOfMatcher[T]) Explain(_ T) string {
-	return "all children match"
+func (aom allOfMatcher[T]) Explain(matched bool, _ T) string {
+	actual := "at least one child did not match"
+	expected := "all children match"
+	return ActualVsExpected(matched, actual, expected)
 }
 
 func (aom allOfMatcher[T]) Unwrap(got T) *ResultTree {
@@ -177,8 +199,10 @@ func (aom anyOfMatcher[T]) Match(got T) bool {
 	return false
 }
 
-func (aom anyOfMatcher[T]) Explain(_ T) string {
-	return "any child matches"
+func (aom anyOfMatcher[T]) Explain(matched bool, _ T) string {
+	actual := "no child matches"
+	expected := "at least one child matches"
+	return ActualVsExpected(matched, actual, expected)
 }
 
 func (aom anyOfMatcher[T]) Unwrap(got T) *ResultTree {
@@ -200,8 +224,15 @@ func (dm derefMatcher[T]) Match(got *T) bool {
 	return dm.matcher.Match(*got)
 }
 
-func (dm derefMatcher[T]) Explain(_ *T) string {
-	return "dereferenced pointer matches"
+func (dm derefMatcher[T]) Explain(matched bool, got *T) string {
+	var actual string
+	if got == nil {
+		actual = "got = nil"
+	} else {
+		actual = fmt.Sprintf("*got = %v", *got)
+	}
+	expected := "*got matches child"
+	return ActualVsExpected(matched, actual, expected)
 }
 
 func (dm derefMatcher[T]) Unwrap(got *T) *ResultTree {
@@ -227,11 +258,20 @@ func (pem *PointerEqualMatcher[T]) Match(got *T) bool {
 	return *pem.want == *got
 }
 
-func (pem *PointerEqualMatcher[T]) Explain(_ *T) string {
+func (pem *PointerEqualMatcher[T]) Explain(matched bool, got *T) string {
+	var expected string
 	if pem.want == nil {
-		return "== nil"
+		expected = "got == nil"
+	} else {
+		expected = fmt.Sprintf("*got == %v", pem.fh.Format(*pem.want))
 	}
-	return fmt.Sprintf("== %v", pem.fh.Format(*pem.want))
+	var actual string
+	if got == nil {
+		actual = "got == nil"
+	} else {
+		actual = fmt.Sprintf("*got = %v", pem.fh.Format(*got))
+	}
+	return ActualVsExpected(matched, actual, expected)
 }
 
 func (pem *PointerEqualMatcher[T]) WithFormat(f func(t T) string) *PointerEqualMatcher[T] {
@@ -295,11 +335,15 @@ func (em *ElementsMatcher[T]) matchUnordered(got []T) bool {
 	return true
 }
 
-func (em *ElementsMatcher[T]) Explain(_ []T) string {
-	if em.unordered {
-		return "elements match (unordered)"
+func (em *ElementsMatcher[T]) Explain(matched bool, _ []T) string {
+	var actual string
+	if matched {
+		actual = "all elements matched"
+	} else {
+		actual = "at least one element did not match"
 	}
-	return "elements match (ordered)"
+	expected := "all elements match"
+	return ActualVsExpected(matched, actual, expected)
 }
 
 func Slice[T any](want []T, factory func(t T) Matcher[T]) Matcher[[]T] {
@@ -330,8 +374,19 @@ func TypeName[T any]() string {
 	return reflect.TypeFor[T]().Name()
 }
 
-func (am anyMatcher[T]) Explain(got any) string {
-	return fmt.Sprintf("type %s", TypeName[T]())
+func (am anyMatcher[T]) Explain(matched bool, got any) string {
+	var actual string
+	expected := fmt.Sprintf("got is of type %s and matches child", TypeName[T]())
+	if matched {
+		actual = expected
+	} else {
+		if _, ok := got.(T); !ok {
+			actual = fmt.Sprintf("got is of type %s", reflect.TypeOf(got).String())
+		} else {
+			actual = fmt.Sprintf("got is of type %s but does not match child", TypeName[T]())
+		}
+	}
+	return ActualVsExpected(matched, actual, expected)
 }
 
 func (am anyMatcher[T]) Unwrap(got any) *ResultTree {
@@ -354,8 +409,15 @@ func (tm typeMatcher[T]) Match(got T) bool {
 	return tm.matcher.Match(got)
 }
 
-func (tm typeMatcher[T]) Explain(_ T) string {
-	return "any type"
+func (tm typeMatcher[T]) Explain(matched bool, _ T) string {
+	expected := "got matches child"
+	var actual string
+	if matched {
+		actual = expected
+	} else {
+		actual = fmt.Sprintf("got of type %s does not match child", TypeName[T]())
+	}
+	return ActualVsExpected(matched, actual, expected)
 }
 
 func (tm typeMatcher[T]) Unwrap(got T) *ResultTree {
