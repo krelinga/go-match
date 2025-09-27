@@ -37,6 +37,18 @@ func (r Result) String() string {
 	return strings.Join(parts, "\n")
 }
 
+func (r Result) singleString(label string) string {
+	parts := []string{}
+	parts = append(parts, fmt.Sprintf("%s %s: %s", matchEmoji(r.Matched), label, r.MatcherType))
+	if r.Explanation != "" {
+		parts = append(parts, fmt.Sprintf("   %s", indent(r.Explanation, 1)))
+	}
+	if r.Unwrapped != nil {
+		parts = append(parts, fmt.Sprintf("   %s", indent(r.Unwrapped.String(), 1)))
+	}
+	return strings.Join(parts, "\n")
+}
+
 func matchEmoji(matched bool) string {
 	if matched {
 		return "✅"
@@ -78,9 +90,20 @@ func (rt *ResultTree) String() string {
 		parts = append(parts, r.String())
 	}
 	for _, b := range rt.Branches {
-		parts = append(parts, fmt.Sprintf("%s:", b.Name), b.ResultTree.String())
+		if sr, ok := b.ResultTree.singleRoot(); ok {
+			parts = append(parts, sr.singleString(b.Name))
+		} else {
+			parts = append(parts, fmt.Sprintf("%s:", b.Name), b.ResultTree.String())
+		}
 	}
 	return strings.Join(parts, "\n")
+}
+
+func (rt *ResultTree) singleRoot() (Result, bool) {
+	if len(rt.Root) == 1 && len(rt.Branches) == 0 {
+		return rt.Root[0], true
+	}
+	return Result{}, false
 }
 
 func NewResultTreeRoot(results ...Result) *ResultTree {
