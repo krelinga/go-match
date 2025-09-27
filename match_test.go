@@ -3,7 +3,7 @@ package match_test
 import (
 	"testing"
 
-	match "github.com/krelinga/go-match/three"
+	"github.com/krelinga/go-match"
 )
 
 func TestEqual(t *testing.T) {
