@@ -18,6 +18,10 @@ type Unwrapper[T any] interface {
 	Unwrap(got T) *ResultTree
 }
 
+type Namer interface {
+	Name() string
+}
+
 type joiner struct {
 	parts []string
 }
@@ -36,18 +40,18 @@ func (j *joiner) String() string {
 }
 
 type Result struct {
-	MatcherType string
+	Name        string
 	Explanation string
 	Unwrapped   *ResultTree
 	Matched     bool
 }
 
 func (r Result) addHeadline(indent int, j *joiner) {
-	j.AddLine(indent, fmt.Sprintf("%s %s", matchEmoji(r.Matched), r.MatcherType))
+	j.AddLine(indent, fmt.Sprintf("%s %s", matchEmoji(r.Matched), r.Name))
 }
 
 func (r Result) addLabeledHeadline(indent int, label string, j *joiner) {
-	j.AddLine(indent, fmt.Sprintf("%s %s: %s", matchEmoji(r.Matched), label, r.MatcherType))
+	j.AddLine(indent, fmt.Sprintf("%s %s: %s", matchEmoji(r.Matched), label, r.Name))
 }
 
 func (r Result) addExplanation(indent int, j *joiner) {
@@ -95,8 +99,12 @@ func Match[T any](got T, matcher Matcher[T]) bool {
 
 func MatchResult[T any](got T, matcher Matcher[T]) Result {
 	result := Result{
-		MatcherType: reflect.TypeOf(matcher).String(),
-		Matched:     matcher.Match(got),
+		Matched: matcher.Match(got),
+	}
+	if n, ok := matcher.(Namer); ok {
+		result.Name = n.Name()
+	} else {
+		result.Name = reflect.TypeOf(matcher).String()
 	}
 	if cm, ok := matcher.(Explainer[T]); ok {
 		result.Explanation = cm.Explain(result.Matched, got)
@@ -206,6 +214,10 @@ func (em *EqualMatcher[T]) WithFormat(f func(t T) string) *EqualMatcher[T] {
 	return em
 }
 
+func (em *EqualMatcher[T]) Name() string {
+	return fmt.Sprintf("match.Equal[%s]", TypeName[T]())
+}
+
 func NotEqual[T comparable](want T) *NotEqualMatcher[T] {
 	return &NotEqualMatcher[T]{want: want}
 }
@@ -230,6 +242,10 @@ func (nem *NotEqualMatcher[T]) Explain(matched bool, got T) string {
 func (nem *NotEqualMatcher[T]) WithFormat(f func(t T) string) *NotEqualMatcher[T] {
 	nem.fh.Set(f)
 	return nem
+}
+
+func (nem *NotEqualMatcher[T]) Name() string {
+	return fmt.Sprintf("match.NotEqual[%s]", TypeName[T]())
 }
 
 func AllOf[T any](matchers ...Matcher[T]) Matcher[T] {
@@ -257,6 +273,10 @@ func (aom allOfMatcher[T]) Explain(matched bool, _ T) string {
 
 func (aom allOfMatcher[T]) Unwrap(got T) *ResultTree {
 	return fanOutMatcherChildren(got, aom.matchers)
+}
+
+func (aom allOfMatcher[T]) Name() string {
+	return fmt.Sprintf("match.AllOf[%s]", TypeName[T]())
 }
 
 func fanOutMatcherChildren[T any](got T, matchers []Matcher[T]) *ResultTree {
@@ -304,6 +324,10 @@ func (aom anyOfMatcher[T]) Unwrap(got T) *ResultTree {
 	return fanOutMatcherChildren(got, aom.matchers)
 }
 
+func (aom anyOfMatcher[T]) Name() string {
+	return fmt.Sprintf("match.AnyOf[%s]", TypeName[T]())
+}
+
 func Deref[T any](matcher Matcher[T]) Matcher[*T] {
 	return derefMatcher[T]{matcher: matcher}
 }
@@ -335,6 +359,10 @@ func (dm derefMatcher[T]) Unwrap(got *T) *ResultTree {
 		return nil
 	}
 	return NewResultTreeRoot(MatchResult(*got, dm.matcher))
+}
+
+func (dm derefMatcher[T]) Name() string {
+	return fmt.Sprintf("match.Deref[%s]", TypeName[T]())
 }
 
 func PointerEqual[T comparable](want *T) *PointerEqualMatcher[T] {
@@ -372,6 +400,10 @@ func (pem *PointerEqualMatcher[T]) Explain(matched bool, got *T) string {
 func (pem *PointerEqualMatcher[T]) WithFormat(f func(t T) string) *PointerEqualMatcher[T] {
 	pem.fh.Set(f)
 	return pem
+}
+
+func (pem *PointerEqualMatcher[T]) Name() string {
+	return fmt.Sprintf("match.PointerEqual[%s]", TypeName[T]())
 }
 
 func Elements[T any](matchers ...Matcher[T]) *ElementsMatcher[T] {
@@ -441,6 +473,10 @@ func (em *ElementsMatcher[T]) Explain(matched bool, _ []T) string {
 	return ActualVsExpected(matched, actual, expected)
 }
 
+func (em *ElementsMatcher[T]) Name() string {
+	return fmt.Sprintf("match.Elements[%s]", TypeName[T]())
+}
+
 func Slice[T any](want []T, factory func(t T) Matcher[T]) Matcher[[]T] {
 	matchers := make([]Matcher[T], len(want))
 	for i, w := range want {
@@ -492,6 +528,10 @@ func (am anyMatcher[T]) Unwrap(got any) *ResultTree {
 	return NewResultTreeRoot(MatchResult(t, am.matcher))
 }
 
+func (am anyMatcher[T]) Name() string {
+	return fmt.Sprintf("match.AsAny[%s]", TypeName[T]())
+}
+
 func AsType[T any](matcher Matcher[any]) Matcher[T] {
 	return typeMatcher[T]{matcher: matcher}
 }
@@ -517,4 +557,8 @@ func (tm typeMatcher[T]) Explain(matched bool, _ T) string {
 
 func (tm typeMatcher[T]) Unwrap(got T) *ResultTree {
 	return NewResultTreeRoot(MatchResult(any(got), tm.matcher))
+}
+
+func (tm typeMatcher[T]) Name() string {
+	return fmt.Sprintf("match.AsType[%s]", TypeName[T]())
 }
