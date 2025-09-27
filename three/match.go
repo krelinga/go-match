@@ -25,6 +25,30 @@ type Result struct {
 	Matched     bool
 }
 
+func (r Result) String() string {
+	parts := []string{}
+	parts = append(parts, fmt.Sprintf("%s %s", matchEmoji(r.Matched), r.MatcherType))
+	if r.Explanation != "" {
+		parts = append(parts, fmt.Sprintf("   %s", indent(r.Explanation, 1)))
+	}
+	if r.Unwrapped != nil {
+		parts = append(parts, fmt.Sprintf("   %s", indent(r.Unwrapped.String(), 1)))
+	}
+	return strings.Join(parts, "\n")
+}
+
+func matchEmoji(matched bool) string {
+	if matched {
+		return "✅"
+	}
+	return "❌"
+}
+
+func indent(s string, depth int) string {
+	padding := strings.Repeat("   ", depth)
+	return strings.ReplaceAll(s, "\n", "\n"+padding)
+}
+
 func Match[T any](got T, matcher Matcher[T]) bool {
 	return matcher.Match(got)
 }
@@ -46,6 +70,17 @@ func MatchResult[T any](got T, matcher Matcher[T]) Result {
 type ResultTree struct {
 	Root     []Result
 	Branches []ResultBranch
+}
+
+func (rt *ResultTree) String() string {
+	parts := []string{}
+	for _, r := range rt.Root {
+		parts = append(parts, r.String())
+	}
+	for _, b := range rt.Branches {
+		parts = append(parts, fmt.Sprintf("%s:", b.Name), b.ResultTree.String())
+	}
+	return strings.Join(parts, "\n")
 }
 
 func NewResultTreeRoot(results ...Result) *ResultTree {
