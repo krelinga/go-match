@@ -18,6 +18,23 @@ type Unwrapper[T any] interface {
 	Unwrap(got T) *ResultTree
 }
 
+type joiner struct {
+	parts []string
+}
+
+func (j *joiner) AddLine(indent int, s string) {
+	padding := strings.Repeat("   ", indent)
+	lines := strings.Split(s, "\n")
+	for i, l := range lines {
+		lines[i] = padding + l
+	}
+	j.parts = append(j.parts, lines...)
+}
+
+func (j *joiner) String() string {
+	return strings.Join(j.parts, "\n")
+}
+
 type Result struct {
 	MatcherType string
 	Explanation string
@@ -25,28 +42,44 @@ type Result struct {
 	Matched     bool
 }
 
-func (r Result) String() string {
-	parts := []string{}
-	parts = append(parts, fmt.Sprintf("%s %s", matchEmoji(r.Matched), r.MatcherType))
-	if r.Explanation != "" {
-		parts = append(parts, fmt.Sprintf("   %s", indent(r.Explanation, 1)))
-	}
-	if r.Unwrapped != nil {
-		parts = append(parts, fmt.Sprintf("   %s", indent(r.Unwrapped.String(), 1)))
-	}
-	return strings.Join(parts, "\n")
+func (r Result) addHeadline(indent int, j *joiner) {
+	j.AddLine(indent, fmt.Sprintf("%s %s", matchEmoji(r.Matched), r.MatcherType))
 }
 
-func (r Result) singleString(label string) string {
-	parts := []string{}
-	parts = append(parts, fmt.Sprintf("%s %s: %s", matchEmoji(r.Matched), label, r.MatcherType))
-	if r.Explanation != "" {
-		parts = append(parts, fmt.Sprintf("   %s", indent(r.Explanation, 1)))
+func (r Result) addLabeledHeadline(indent int, label string, j *joiner) {
+	j.AddLine(indent, fmt.Sprintf("%s %s: %s", matchEmoji(r.Matched), label, r.MatcherType))
+}
+
+func (r Result) addExplanation(indent int, j *joiner) {
+	if r.Explanation == "" {
+		return
 	}
-	if r.Unwrapped != nil {
-		parts = append(parts, fmt.Sprintf("   %s", indent(r.Unwrapped.String(), 1)))
+	j.AddLine(indent+1, r.Explanation)
+}
+
+func (r Result) addUnwrapped(indent int, j *joiner) {
+	if r.Unwrapped == nil {
+		return
 	}
-	return strings.Join(parts, "\n")
+	j.AddLine(indent+1, r.Unwrapped.String())
+}
+
+func (r Result) addRoot(indent int, j *joiner) {
+	r.addHeadline(indent, j)
+	r.addExplanation(indent, j)
+	r.addUnwrapped(indent, j)
+}
+
+func (r Result) addLabeled(indent int, label string, j *joiner) {
+	r.addLabeledHeadline(indent, label, j)
+	r.addExplanation(indent, j)
+	r.addUnwrapped(indent, j)
+}
+
+func (r Result) String() string {
+	j := &joiner{}
+	r.addRoot(0, j)
+	return j.String()
 }
 
 func matchEmoji(matched bool) string {
@@ -54,11 +87,6 @@ func matchEmoji(matched bool) string {
 		return "✅"
 	}
 	return "❌"
-}
-
-func indent(s string, depth int) string {
-	padding := strings.Repeat("   ", depth)
-	return strings.ReplaceAll(s, "\n", "\n"+padding)
 }
 
 func Match[T any](got T, matcher Matcher[T]) bool {
@@ -84,19 +112,19 @@ type ResultTree struct {
 	Branches []ResultBranch
 }
 
-func (rt *ResultTree) String() string {
-	parts := []string{}
+func (rt *ResultTree) add(indent int, j *joiner) {
 	for _, r := range rt.Root {
-		parts = append(parts, r.String())
+		r.addRoot(indent, j)
 	}
 	for _, b := range rt.Branches {
-		if sr, ok := b.ResultTree.singleRoot(); ok {
-			parts = append(parts, sr.singleString(b.Name))
-		} else {
-			parts = append(parts, fmt.Sprintf("%s:", b.Name), b.ResultTree.String())
-		}
+		b.add(indent, j)
 	}
-	return strings.Join(parts, "\n")
+}
+
+func (rt *ResultTree) String() string {
+	j := &joiner{}
+	rt.add(0, j)
+	return j.String()
 }
 
 func (rt *ResultTree) singleRoot() (Result, bool) {
@@ -115,6 +143,15 @@ func NewResultTreeRoot(results ...Result) *ResultTree {
 type ResultBranch struct {
 	Name string
 	ResultTree
+}
+
+func (rb ResultBranch) add(indent int, j *joiner) {
+	if r, ok := rb.singleRoot(); ok {
+		r.addLabeled(indent, rb.Name, j)
+	} else {
+		j.AddLine(indent, fmt.Sprintf("%s:", rb.Name))
+		rb.ResultTree.add(indent+1, j)
+	}
 }
 
 type FormatHelper[T any] struct {
