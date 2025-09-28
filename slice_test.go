@@ -61,3 +61,14 @@ func TestSliceNil(t *testing.T) {
 	t.Logf("\n%s", match.Explain(nil, m))
 	t.Logf("\n%s", match.Explain([]string{}, m))
 }
+
+func TestSliceHas(t *testing.T) {
+	m := match.SliceHas[int]{
+		M: match.Equal[int]{X: 42},
+	}
+	if !match.Match([]int{1, 42, 3}, m) {
+		t.Error("Expected match")
+	}
+	t.Logf("\n%s", match.Explain([]int{1, 42, 3}, m))
+	t.Logf("\n%s", match.Explain([]int{1, 2, 3}, m))
+}

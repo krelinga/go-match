@@ -170,3 +170,35 @@ func (sn SliceNil[T]) Explain(got []T) string {
 	}
 	return matchutil.Explain(match, matchutil.TypeName(sn), details...)
 }
+
+func NewSliceHas[T any](m Matcher[T]) SliceHas[T] {
+	return SliceHas[T]{M: m}
+}
+
+type SliceHas[T any] struct {
+	M Matcher[T]
+}
+
+func (s SliceHas[T]) Match(got []T) bool {
+	for _, elem := range got {
+		if s.M.Match(elem) {
+			return true
+		}
+	}
+	return false
+}
+
+func (s SliceHas[T]) Explain(got []T) string {
+	match := s.Match(got)
+	var details []string
+	if match {
+		details = append(details, "found matching element")
+	} else {
+		details = append(details, "no matching element found")
+	}
+	for i, elem := range got {
+		detail := fmt.Sprintf("index %d:\n%s", i, matchutil.Indent(Explain(elem, s.M), 1))
+		details = append(details, detail)
+	}
+	return matchutil.Explain(match, matchutil.TypeName(s), details...)
+}
