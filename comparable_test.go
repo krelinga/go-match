@@ -73,4 +73,58 @@ func TestNotEqual(t *testing.T) {
 		assertImplements[match.NotEqual[int], match.Matcher[int]](t)
 		assertImplements[match.NotEqual[int], match.Explainer[int]](t)
 	})
+
+	goldie := newGoldie(t)
+	tests := []struct {
+		name string
+		m    match.NotEqual[string]
+		val  string
+		want bool
+	}{
+		{
+			name: "match",
+			m:    match.NotEqual[string]{X: "hello"},
+			val:  "world",
+			want: true,
+		},
+		{
+			name: "no_match",
+			m:    match.NotEqual[string]{X: "hello"},
+			val:  "hello",
+			want: false,
+		},
+		{
+			name: "match_func",
+			m:    match.NewNotEqual("hello"),
+			val:  "world",
+			want: true,
+		},
+		{
+			name: "no_match_func",
+			m:    match.NewNotEqual("hello"),
+			val:  "hello",
+			want: false,
+		},
+		{
+			name: "match_format",
+			m:    match.NotEqual[string]{X: "hello", Format: strings.ToUpper},
+			val:  "world",
+			want: true,
+		},
+		{
+			name: "no_match_format",
+			m:    match.NotEqual[string]{X: "hello", Format: strings.ToUpper},
+			val:  "hello",
+			want: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := match.Match(tt.val, tt.m)
+			if got != tt.want {
+				t.Errorf("Match() = %v, want %v", got, tt.want)
+			}
+			goldie.Assert(t, tt.name, []byte(match.Explain(tt.val, tt.m)))
+		})
+	}
 }
