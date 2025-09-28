@@ -1,89 +1,11 @@
 package match
 
-import (
-	"fmt"
-	"reflect"
-	"strings"
-)
-
 type Matcher[T any] interface {
 	Match(got T) bool
 }
 
 type Explainer[T any] interface {
-	Explain(matched bool, got T) string
-}
-
-type Unwrapper[T any] interface {
-	Unwrap(got T) *ResultTree
-}
-
-type Namer interface {
-	Name() string
-}
-
-type joiner struct {
-	parts []string
-}
-
-func (j *joiner) AddLine(indent int, s string) {
-	padding := strings.Repeat("   ", indent)
-	lines := strings.Split(s, "\n")
-	for i, l := range lines {
-		lines[i] = padding + l
-	}
-	j.parts = append(j.parts, lines...)
-}
-
-func (j *joiner) String() string {
-	return strings.Join(j.parts, "\n")
-}
-
-type Result struct {
-	Name        string
-	Explanation string
-	Unwrapped   *ResultTree
-	Matched     bool
-}
-
-func (r Result) addHeadline(indent int, j *joiner) {
-	j.AddLine(indent, fmt.Sprintf("%s %s", matchEmoji(r.Matched), r.Name))
-}
-
-func (r Result) addLabeledHeadline(indent int, label string, j *joiner) {
-	j.AddLine(indent, fmt.Sprintf("%s %s: %s", matchEmoji(r.Matched), label, r.Name))
-}
-
-func (r Result) addExplanation(indent int, j *joiner) {
-	if r.Explanation == "" {
-		return
-	}
-	j.AddLine(indent+1, r.Explanation)
-}
-
-func (r Result) addUnwrapped(indent int, j *joiner) {
-	if r.Unwrapped == nil {
-		return
-	}
-	j.AddLine(indent+1, r.Unwrapped.String())
-}
-
-func (r Result) addRoot(indent int, j *joiner) {
-	r.addHeadline(indent, j)
-	r.addExplanation(indent, j)
-	r.addUnwrapped(indent, j)
-}
-
-func (r Result) addLabeled(indent int, label string, j *joiner) {
-	r.addLabeledHeadline(indent, label, j)
-	r.addExplanation(indent, j)
-	r.addUnwrapped(indent, j)
-}
-
-func (r Result) String() string {
-	j := &joiner{}
-	r.addRoot(0, j)
-	return j.String()
+	Explain(got T) string
 }
 
 func matchEmoji(matched bool) string {
@@ -97,468 +19,125 @@ func Match[T any](got T, matcher Matcher[T]) bool {
 	return matcher.Match(got)
 }
 
-func MatchResult[T any](got T, matcher Matcher[T]) Result {
-	result := Result{
-		Matched: matcher.Match(got),
-	}
-	if n, ok := matcher.(Namer); ok {
-		result.Name = n.Name()
-	} else {
-		result.Name = reflect.TypeOf(matcher).String()
-	}
-	if cm, ok := matcher.(Explainer[T]); ok {
-		result.Explanation = cm.Explain(result.Matched, got)
-	}
-	if pm, ok := matcher.(Unwrapper[T]); ok {
-		result.Unwrapped = pm.Unwrap(got)
-	}
-	return result
+func Explain[T any](got T, matcher Matcher[T]) string {
+	return "" // TODO
 }
 
-type ResultTree struct {
-	Root     []Result
-	Branches []ResultBranch
+func NewEqual[T comparable](x T) Equal[T] {
+	return Equal[T]{X: x}
 }
 
-func (rt *ResultTree) add(indent int, j *joiner) {
-	for _, r := range rt.Root {
-		r.addRoot(indent, j)
-	}
-	for _, b := range rt.Branches {
-		b.add(indent, j)
-	}
+type Equal[T comparable] struct {
+	X T
+	Format func(t T) string
 }
 
-func (rt *ResultTree) String() string {
-	j := &joiner{}
-	rt.add(0, j)
-	return j.String()
+func (e Equal[T]) Match(got T) bool {
+	return got == e.X
 }
 
-func (rt *ResultTree) singleRoot() (Result, bool) {
-	if len(rt.Root) == 1 && len(rt.Branches) == 0 {
-		return rt.Root[0], true
-	}
-	return Result{}, false
+func (e Equal[T]) Explain(got T) string {
+	return "" // TODO
 }
 
-func NewResultTreeRoot(results ...Result) *ResultTree {
-	return &ResultTree{
-		Root: results,
-	}
+func NewNotEqual[T comparable](x T) NotEqual[T] {
+	return NotEqual[T]{X: x}
 }
 
-type ResultBranch struct {
-	Name string
-	ResultTree
+type NotEqual[T comparable] struct {
+	X T
+	Format func(t T) string
 }
 
-func (rb ResultBranch) add(indent int, j *joiner) {
-	if r, ok := rb.singleRoot(); ok {
-		r.addLabeled(indent, rb.Name, j)
-	} else {
-		j.AddLine(indent, fmt.Sprintf("%s:", rb.Name))
-		rb.ResultTree.add(indent+1, j)
-	}
+func (ne NotEqual[T]) Match(got T) bool {
+	return got != ne.X
 }
 
-type FormatHelper[T any] struct {
-	ff func(t T) string
+func (ne NotEqual[T]) Explain(got T) string {
+	return "" // TODO
 }
 
-func (fh *FormatHelper[T]) Format(t T) string {
-	if fh.ff != nil {
-		return fh.ff(t)
-	}
-	return fmt.Sprintf("%v", t)
+func NewAllOf[T any](m ...Matcher[T]) AllOf[T] {
+	return AllOf[T]{M: m}
 }
 
-func (fh *FormatHelper[T]) Set(ff func(t T) string) {
-	fh.ff = ff
+type AllOf[T any] struct {
+	M []Matcher[T]
 }
 
-func ActualVsExpected(matched bool, actual, expected string) string {
-	if matched {
-		return expected
-	}
-	sb := &strings.Builder{}
-	sb.WriteString("ACTUAL  : ")
-	sb.WriteString(actual)
-	sb.WriteString("\n")
-	sb.WriteString("EXPECTED: ")
-	sb.WriteString(expected)
-	return sb.String()
-}
-
-func Equal[T comparable](want T) *EqualMatcher[T] {
-	return &EqualMatcher[T]{want: want}
-}
-
-type EqualMatcher[T comparable] struct {
-	want T
-	fh   FormatHelper[T]
-}
-
-func (em *EqualMatcher[T]) Match(got T) bool {
-	return got == em.want
-}
-
-func (em *EqualMatcher[T]) Explain(matched bool, got T) string {
-	actual := fmt.Sprintf("got = %s", em.fh.Format(got))
-	expected := fmt.Sprintf("got = %s", em.fh.Format(em.want))
-	return ActualVsExpected(matched, actual, expected)
-}
-
-func (em *EqualMatcher[T]) WithFormat(f func(t T) string) *EqualMatcher[T] {
-	em.fh.Set(f)
-	return em
-}
-
-func (em *EqualMatcher[T]) Name() string {
-	return fmt.Sprintf("match.Equal[%s]", TypeName[T]())
-}
-
-func NotEqual[T comparable](want T) *NotEqualMatcher[T] {
-	return &NotEqualMatcher[T]{want: want}
-}
-
-type NotEqualMatcher[T comparable] struct {
-	want T
-	fh   FormatHelper[T]
-}
-
-func (nem *NotEqualMatcher[T]) Match(got T) bool {
-	return got != nem.want
-}
-
-func (nem *NotEqualMatcher[T]) Explain(matched bool, got T) string {
-	expected := fmt.Sprintf("got != %s", nem.fh.Format(nem.want))
-	if matched {
-		return expected
-	}
-	return fmt.Sprintf("%s != %s", nem.fh.Format(got), nem.fh.Format(nem.want))
-}
-
-func (nem *NotEqualMatcher[T]) WithFormat(f func(t T) string) *NotEqualMatcher[T] {
-	nem.fh.Set(f)
-	return nem
-}
-
-func (nem *NotEqualMatcher[T]) Name() string {
-	return fmt.Sprintf("match.NotEqual[%s]", TypeName[T]())
-}
-
-func AllOf[T any](matchers ...Matcher[T]) Matcher[T] {
-	return allOfMatcher[T]{matchers: matchers}
-}
-
-type allOfMatcher[T any] struct {
-	matchers []Matcher[T]
-}
-
-func (aom allOfMatcher[T]) Match(got T) bool {
-	for _, matcher := range aom.matchers {
-		if !matcher.Match(got) {
+func (a AllOf[T]) Match(got T) bool {
+	for _, m := range a.M {
+		if !m.Match(got) {
 			return false
 		}
 	}
 	return true
 }
 
-func (aom allOfMatcher[T]) Explain(matched bool, _ T) string {
-	actual := "at least one child did not match"
-	expected := "all children match"
-	return ActualVsExpected(matched, actual, expected)
+func (a AllOf[T]) Explain(_ T) string {
+	return "" // TODO
 }
 
-func (aom allOfMatcher[T]) Unwrap(got T) *ResultTree {
-	return fanOutMatcherChildren(got, aom.matchers)
+type AnyOf[T any] struct {
+	M []Matcher[T]
 }
 
-func (aom allOfMatcher[T]) Name() string {
-	return fmt.Sprintf("match.AllOf[%s]", TypeName[T]())
+func NewAnyOf[T any](m ...Matcher[T]) AnyOf[T] {
+	return AnyOf[T]{M: m}
 }
 
-func fanOutMatcherChildren[T any](got T, matchers []Matcher[T]) *ResultTree {
-	if len(matchers) == 0 {
-		return nil
-	}
-	rt := &ResultTree{
-		Branches: make([]ResultBranch, len(matchers)),
-	}
-	for i, matcher := range matchers {
-		rt.Branches[i] = ResultBranch{
-			Name: fmt.Sprintf("index %d", i),
-			ResultTree: ResultTree{
-				Root: []Result{MatchResult(got, matcher)},
-			},
-		}
-	}
-	return rt
-}
-
-func AnyOf[T any](matchers ...Matcher[T]) Matcher[T] {
-	return anyOfMatcher[T]{matchers: matchers}
-}
-
-type anyOfMatcher[T any] struct {
-	matchers []Matcher[T]
-}
-
-func (aom anyOfMatcher[T]) Match(got T) bool {
-	for _, matcher := range aom.matchers {
-		if matcher.Match(got) {
+func (a AnyOf[T]) Match(got T) bool {
+	for _, m := range a.M {
+		if m.Match(got) {
 			return true
 		}
 	}
 	return false
 }
 
-func (aom anyOfMatcher[T]) Explain(matched bool, _ T) string {
-	actual := "no child matches"
-	expected := "at least one child matches"
-	return ActualVsExpected(matched, actual, expected)
+func (a AnyOf[T]) Explain(_ T) string {
+	return "" // TODO
 }
 
-func (aom anyOfMatcher[T]) Unwrap(got T) *ResultTree {
-	return fanOutMatcherChildren(got, aom.matchers)
+func NewWhenDeref[T any](m Matcher[T]) WhenDeref[T] {
+	return WhenDeref[T]{M: m}
 }
 
-func (aom anyOfMatcher[T]) Name() string {
-	return fmt.Sprintf("match.AnyOf[%s]", TypeName[T]())
+type WhenDeref[T any] struct {
+	M Matcher[T]
 }
 
-func Deref[T any](matcher Matcher[T]) Matcher[*T] {
-	return derefMatcher[T]{matcher: matcher}
-}
-
-type derefMatcher[T any] struct {
-	matcher Matcher[T]
-}
-
-func (dm derefMatcher[T]) Match(got *T) bool {
+func (p WhenDeref[T]) Match(got *T) bool {
 	if got == nil {
 		return false
 	}
-	return dm.matcher.Match(*got)
+	return p.M.Match(*got)
 }
 
-func (dm derefMatcher[T]) Explain(matched bool, got *T) string {
-	var actual string
-	if got == nil {
-		actual = "got = nil"
-	} else {
-		actual = fmt.Sprintf("*got = %v", *got)
-	}
-	expected := "*got matches child"
-	return ActualVsExpected(matched, actual, expected)
+func (p WhenDeref[T]) Explain(got *T) string {
+	return "" // TODO
 }
 
-func (dm derefMatcher[T]) Unwrap(got *T) *ResultTree {
-	if got == nil {
-		return nil
-	}
-	return NewResultTreeRoot(MatchResult(*got, dm.matcher))
+func NewSliceElems[T any](m ...Matcher[T]) SliceElems[T] {
+	return SliceElems[T]{M: m}
 }
 
-func (dm derefMatcher[T]) Name() string {
-	return fmt.Sprintf("match.Deref[%s]", TypeName[T]())
+type SliceElems[T any] struct {
+	M []Matcher[T]
 }
 
-func PointerEqual[T comparable](want *T) *PointerEqualMatcher[T] {
-	return &PointerEqualMatcher[T]{want: want}
-}
-
-type PointerEqualMatcher[T comparable] struct {
-	want *T
-	fh   FormatHelper[T]
-}
-
-func (pem *PointerEqualMatcher[T]) Match(got *T) bool {
-	if pem.want == nil || got == nil {
-		return pem.want == got
-	}
-	return *pem.want == *got
-}
-
-func (pem *PointerEqualMatcher[T]) Explain(matched bool, got *T) string {
-	var expected string
-	if pem.want == nil {
-		expected = "got == nil"
-	} else {
-		expected = fmt.Sprintf("*got == %v", pem.fh.Format(*pem.want))
-	}
-	var actual string
-	if got == nil {
-		actual = "got == nil"
-	} else {
-		actual = fmt.Sprintf("*got = %v", pem.fh.Format(*got))
-	}
-	return ActualVsExpected(matched, actual, expected)
-}
-
-func (pem *PointerEqualMatcher[T]) WithFormat(f func(t T) string) *PointerEqualMatcher[T] {
-	pem.fh.Set(f)
-	return pem
-}
-
-func (pem *PointerEqualMatcher[T]) Name() string {
-	return fmt.Sprintf("match.PointerEqual[%s]", TypeName[T]())
-}
-
-func Elements[T any](matchers ...Matcher[T]) *ElementsMatcher[T] {
-	return &ElementsMatcher[T]{matchers: matchers}
-}
-
-type ElementsMatcher[T any] struct {
-	matchers  []Matcher[T]
-	unordered bool
-}
-
-func (em *ElementsMatcher[T]) Unordered(u bool) *ElementsMatcher[T] {
-	em.unordered = u
-	return em
-}
-
-func (em *ElementsMatcher[T]) Match(got []T) bool {
-	if em.matchers == nil {
-		panic("ElementsMatcher not initialized.  Use Elements(...) to create one.")
-	}
-	if len(got) != len(em.matchers) {
+func (s SliceElems[T]) Match(got []T) bool {
+	if len(got) != len(s.M) {
 		return false
 	}
-	if em.unordered {
-		return em.matchUnordered(got)
-	}
-	return em.matchOrdered(got)
-}
-
-// TODO: support Unwrap() on ElementsMatcher.
-
-func (em *ElementsMatcher[T]) matchOrdered(got []T) bool {
-	for i, matcher := range em.matchers {
-		if !matcher.Match(got[i]) {
+	for i, elem := range got {
+		if !s.M[i].Match(elem) {
 			return false
 		}
 	}
 	return true
 }
 
-func (em *ElementsMatcher[T]) matchUnordered(got []T) bool {
-	used := make([]bool, len(got))
-	for _, matcher := range em.matchers {
-		matched := false
-		for i, g := range got {
-			if !used[i] && matcher.Match(g) {
-				used[i] = true
-				matched = true
-				break
-			}
-		}
-		if !matched {
-			return false
-		}
-	}
-	return true
-}
-
-func (em *ElementsMatcher[T]) Explain(matched bool, _ []T) string {
-	var actual string
-	if matched {
-		actual = "all elements matched"
-	} else {
-		actual = "at least one element did not match"
-	}
-	expected := "all elements match"
-	return ActualVsExpected(matched, actual, expected)
-}
-
-func (em *ElementsMatcher[T]) Name() string {
-	return fmt.Sprintf("match.Elements[%s]", TypeName[T]())
-}
-
-func Slice[T any](want []T, factory func(t T) Matcher[T]) Matcher[[]T] {
-	matchers := make([]Matcher[T], len(want))
-	for i, w := range want {
-		matchers[i] = factory(w)
-	}
-	return Elements(matchers...)
-}
-
-func AsAny[T any](matcher Matcher[T]) Matcher[any] {
-	return anyMatcher[T]{matcher: matcher}
-}
-
-type anyMatcher[T any] struct {
-	matcher Matcher[T]
-}
-
-func (am anyMatcher[T]) Match(got any) bool {
-	t, ok := got.(T)
-	if !ok {
-		return false
-	}
-	return am.matcher.Match(t)
-}
-
-func TypeName[T any]() string {
-	return reflect.TypeFor[T]().Name()
-}
-
-func (am anyMatcher[T]) Explain(matched bool, got any) string {
-	var actual string
-	expected := fmt.Sprintf("got is of type %s and matches child", TypeName[T]())
-	if matched {
-		actual = expected
-	} else {
-		if _, ok := got.(T); !ok {
-			actual = fmt.Sprintf("got is of type %s", reflect.TypeOf(got).String())
-		} else {
-			actual = fmt.Sprintf("got is of type %s but does not match child", TypeName[T]())
-		}
-	}
-	return ActualVsExpected(matched, actual, expected)
-}
-
-func (am anyMatcher[T]) Unwrap(got any) *ResultTree {
-	t, ok := got.(T)
-	if !ok {
-		return nil
-	}
-	return NewResultTreeRoot(MatchResult(t, am.matcher))
-}
-
-func (am anyMatcher[T]) Name() string {
-	return fmt.Sprintf("match.AsAny[%s]", TypeName[T]())
-}
-
-func AsType[T any](matcher Matcher[any]) Matcher[T] {
-	return typeMatcher[T]{matcher: matcher}
-}
-
-type typeMatcher[T any] struct {
-	matcher Matcher[any]
-}
-
-func (tm typeMatcher[T]) Match(got T) bool {
-	return tm.matcher.Match(got)
-}
-
-func (tm typeMatcher[T]) Explain(matched bool, _ T) string {
-	expected := "got matches child"
-	var actual string
-	if matched {
-		actual = expected
-	} else {
-		actual = fmt.Sprintf("got of type %s does not match child", TypeName[T]())
-	}
-	return ActualVsExpected(matched, actual, expected)
-}
-
-func (tm typeMatcher[T]) Unwrap(got T) *ResultTree {
-	return NewResultTreeRoot(MatchResult(any(got), tm.matcher))
-}
-
-func (tm typeMatcher[T]) Name() string {
-	return fmt.Sprintf("match.AsType[%s]", TypeName[T]())
+func (s SliceElems[T]) Explain(_ []T) string {
+	return "" // TODO
 }

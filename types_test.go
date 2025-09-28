@@ -16,53 +16,31 @@ func implements[Got any, Want any](t *testing.T) {
 }
 
 func TestEqual(t *testing.T) {
-	implements[*EqualMatcher[int], Matcher[int]](t)
-	implements[*EqualMatcher[int], Explainer[int]](t)
+	implements[Equal[int], Matcher[int]](t)
+	implements[Equal[int], Explainer[int]](t)
 }
 
 func TestNotEqual(t *testing.T) {
-	implements[*NotEqualMatcher[int], Matcher[int]](t)
-	implements[*NotEqualMatcher[int], Explainer[int]](t)
+	implements[NotEqual[int], Matcher[int]](t)
+	implements[NotEqual[int], Explainer[int]](t)
 }
 
 func TestAllOf(t *testing.T) {
-	implements[*allOfMatcher[int], Matcher[int]](t)
-	implements[*allOfMatcher[int], Explainer[int]](t)
-	implements[*allOfMatcher[int], Unwrapper[int]](t)
+	implements[AllOf[int], Matcher[int]](t)
+	implements[AllOf[int], Explainer[int]](t)
 }
 
 func TestAnyOf(t *testing.T) {
-	implements[*anyOfMatcher[int], Matcher[int]](t)
-	implements[*anyOfMatcher[int], Explainer[int]](t)
-	implements[*anyOfMatcher[int], Unwrapper[int]](t)
+	implements[AnyOf[int], Matcher[int]](t)
+	implements[AnyOf[int], Explainer[int]](t)
 }
 
-func TestDeref(t *testing.T) {
-	implements[derefMatcher[int], Matcher[*int]](t)
-	implements[derefMatcher[int], Explainer[*int]](t)
-	implements[derefMatcher[int], Unwrapper[*int]](t)
+func TestWhenDeref(t *testing.T) {
+	implements[WhenDeref[int], Matcher[*int]](t)
+	implements[WhenDeref[int], Explainer[*int]](t)
 }
 
-func TestPointerEqual(t *testing.T) {
-	implements[*PointerEqualMatcher[int], Matcher[*int]](t)
-	implements[*PointerEqualMatcher[int], Explainer[*int]](t)
-}
-
-func TestElements(t *testing.T) {
-	implements[*ElementsMatcher[int], Matcher[[]int]](t)
-	implements[*ElementsMatcher[int], Explainer[[]int]](t)
-	// TODO: Uncomment when ElementsMatcher implements Unwrapper.
-	// implements[*ElementsMatcher[int], Unwrapper[[]int]](t)
-}
-
-func TestAsAny(t *testing.T) {
-	implements[anyMatcher[int], Matcher[any]](t)
-	implements[anyMatcher[int], Explainer[any]](t)
-	implements[anyMatcher[int], Unwrapper[any]](t)
-}
-
-func TestAsType(t *testing.T) {
-	implements[typeMatcher[int], Matcher[int]](t)
-	implements[typeMatcher[int], Explainer[int]](t)
-	implements[typeMatcher[int], Unwrapper[int]](t)
+func TestSliceElems(t *testing.T) {
+	implements[SliceElems[int], Matcher[[]int]](t)
+	implements[SliceElems[int], Explainer[[]int]](t)
 }
