@@ -1,0 +1,3 @@
+❌ match.Equal[int]:
+   Actual:   got == 0x100
+   Expected: got == 0xff

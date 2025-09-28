@@ -1,0 +1,3 @@
+❌ match.Equal[int]:
+   Actual:   got == 5
+   Expected: got == -10
