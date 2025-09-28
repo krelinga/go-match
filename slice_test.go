@@ -21,3 +21,15 @@ func TestSliceElems(t *testing.T) {
 	t.Logf("\n%s", match.Explain([]int{1, 2, 3, 4}, m))
 	t.Logf("\n%s", match.Explain([]int{1, 2}, m))
 }
+
+func TestSliceLen(t *testing.T) {
+	m := match.SliceLen[string]{
+		M: match.Equal[int]{X: 3},
+	}
+	if !match.Match([]string{"a", "b", "c"}, m) {
+		t.Error("Expected match")
+	}
+	t.Logf("\n%s", match.Explain([]string{"a", "b", "c"}, m))
+	t.Logf("\n%s", match.Explain([]string{"a", "b"}, m))
+	t.Logf("\n%s", match.Explain([]string{"a", "b", "c", "d"}, m))
+}

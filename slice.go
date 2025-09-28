@@ -37,3 +37,27 @@ func (s SliceElems[T]) Explain(got []T) string {
 	}
 	return matchutil.Explain(match, matchutil.TypeName(s), details...)
 }
+
+func NewSliceLen[T any](m Matcher[int]) SliceLen[T] {
+	return SliceLen[T]{M: m}
+}
+
+type SliceLen[T any] struct {
+	M Matcher[int]
+}
+
+func (s SliceLen[T]) Match(got []T) bool {
+	return s.M.Match(len(got))
+}
+
+func (s SliceLen[T]) Explain(got []T) string {
+	match := s.Match(got)
+	var details []string
+	if match {
+		details = append(details, "matched length")
+	} else {
+		details = append(details, "did not match length")
+	}
+	details = append(details, Explain(len(got), s.M))
+	return matchutil.Explain(match, matchutil.TypeName(s), details...)
+}
