@@ -5,11 +5,10 @@ import (
 	"testing"
 
 	"github.com/krelinga/go-match"
-	"github.com/sebdah/goldie/v2"
 )
 
 func TestEqualIntExplain_Golden(t *testing.T) {
-	g := goldie.New(t)
+	g := newGoldie(t)
 
 	tests := []struct {
 		name    string
@@ -57,7 +56,7 @@ func TestEqualIntExplain_Golden(t *testing.T) {
 }
 
 func TestEqualIntWithCustomFormat_Golden(t *testing.T) {
-	g := goldie.New(t)
+	g := newGoldie(t)
 
 	tests := []struct {
 		name    string
