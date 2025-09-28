@@ -13,4 +13,5 @@ func TestEqual(t *testing.T) {
 	}
 	t.Logf("\n%s", match.Explain(42, m))
 	t.Logf("\n%s", match.Explain(43, m))
+	t.Logf("\n%s", m.String())
 }

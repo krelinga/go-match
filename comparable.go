@@ -2,6 +2,7 @@ package match
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/krelinga/go-match/matchutil"
 )
@@ -30,6 +31,15 @@ func (e Equal[T]) Explain(got T) string {
 		details = append(details, matchutil.ActualVsExpected(actual, expected))
 	}
 	return matchutil.Explain(match, matchutil.TypeName(e), details...)
+}
+
+func (e Equal[T]) String() string {
+	fields := []string{
+		fmt.Sprintf("X: %s,", matchutil.FormatWith(e.X, e.Format)),
+		fmt.Sprintf("Format: %s,", matchutil.MatcherString(e.Format)),
+	}
+	fieldsStr := matchutil.Indent(strings.Join(fields, "\n"), 1)
+	return fmt.Sprintf("%s{\n%s\n}", matchutil.TypeName(e), fieldsStr)
 }
 
 func NewNotEqual[T comparable](x T) NotEqual[T] {
