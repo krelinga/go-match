@@ -1,5 +1,11 @@
 package match
 
+import (
+	"fmt"
+
+	"github.com/krelinga/go-match/matchutil"
+)
+
 type Matcher[T any] interface {
 	Match(got T) bool
 }
@@ -8,19 +14,15 @@ type Explainer[T any] interface {
 	Explain(got T) string
 }
 
-func matchEmoji(matched bool) string {
-	if matched {
-		return "✅"
-	}
-	return "❌"
-}
-
 func Match[T any](got T, matcher Matcher[T]) bool {
 	return matcher.Match(got)
 }
 
 func Explain[T any](got T, matcher Matcher[T]) string {
-	return "" // TODO
+	if explainer, ok := matcher.(Explainer[T]); ok {
+		return explainer.Explain(got)
+	}
+	return matchutil.Explain(matcher.Match(got), matchutil.TypeName(matcher))
 }
 
 func NewEqual[T comparable](x T) Equal[T] {
@@ -28,7 +30,7 @@ func NewEqual[T comparable](x T) Equal[T] {
 }
 
 type Equal[T comparable] struct {
-	X T
+	X      T
 	Format func(t T) string
 }
 
@@ -37,7 +39,16 @@ func (e Equal[T]) Match(got T) bool {
 }
 
 func (e Equal[T]) Explain(got T) string {
-	return "" // TODO
+	match := e.Match(got)
+	var details []string
+	expected := fmt.Sprintf("got == %s", matchutil.FormatWith(e.X, e.Format))
+	if match {
+		details = append(details, expected)
+	} else {
+		actual := fmt.Sprintf("got == %s", matchutil.FormatWith(got, e.Format))
+		details = append(details, matchutil.ActualVsExpected(actual, expected))
+	}
+	return matchutil.Explain(match, matchutil.TypeName(e), details...)
 }
 
 func NewNotEqual[T comparable](x T) NotEqual[T] {
@@ -45,7 +56,7 @@ func NewNotEqual[T comparable](x T) NotEqual[T] {
 }
 
 type NotEqual[T comparable] struct {
-	X T
+	X      T
 	Format func(t T) string
 }
 
@@ -54,7 +65,16 @@ func (ne NotEqual[T]) Match(got T) bool {
 }
 
 func (ne NotEqual[T]) Explain(got T) string {
-	return "" // TODO
+	match := ne.Match(got)
+	var details []string
+	expected := fmt.Sprintf("got != %s", matchutil.FormatWith(ne.X, ne.Format))
+	if match {
+		details = append(details, expected)
+	} else {
+		actual := fmt.Sprintf("got == %s", matchutil.FormatWith(got, ne.Format))
+		details = append(details, matchutil.ActualVsExpected(actual, expected))
+	}
+	return matchutil.Explain(match, matchutil.TypeName(ne), details...)
 }
 
 func NewAllOf[T any](m ...Matcher[T]) AllOf[T] {
@@ -74,8 +94,20 @@ func (a AllOf[T]) Match(got T) bool {
 	return true
 }
 
-func (a AllOf[T]) Explain(_ T) string {
-	return "" // TODO
+func (a AllOf[T]) Explain(got T) string {
+	match := a.Match(got)
+	var details []string
+	if match {
+		details = append(details, "matched all conditions")
+	}
+	if !match {
+		details = append(details, "did not match all conditions")
+	}
+	for i, m := range a.M {
+		detail := fmt.Sprintf("index %d:\n%s", i, matchutil.Indent(Explain(got, m), 1))
+		details = append(details, detail)
+	}
+	return matchutil.Explain(match, matchutil.TypeName(a), details...)
 }
 
 type AnyOf[T any] struct {
@@ -95,8 +127,19 @@ func (a AnyOf[T]) Match(got T) bool {
 	return false
 }
 
-func (a AnyOf[T]) Explain(_ T) string {
-	return "" // TODO
+func (a AnyOf[T]) Explain(got T) string {
+	match := a.Match(got)
+	var details []string
+	if match {
+		details = append(details, "matched at least one condition")
+	} else {
+		details = append(details, "did not match any condition")
+	}
+	for i, m := range a.M {
+		detail := fmt.Sprintf("index %d:\n%s", i, matchutil.Indent(Explain(got, m), 1))
+		details = append(details, detail)
+	}
+	return matchutil.Explain(match, matchutil.TypeName(a), details...)
 }
 
 func NewWhenDeref[T any](m Matcher[T]) WhenDeref[T] {
@@ -115,7 +158,14 @@ func (p WhenDeref[T]) Match(got *T) bool {
 }
 
 func (p WhenDeref[T]) Explain(got *T) string {
-	return "" // TODO
+	match := p.Match(got)
+	var details []string
+	if got == nil {
+		details = append(details, "got == nil")
+	} else {
+		details = append(details, "got != nil", Explain(*got, p.M))
+	}
+	return matchutil.Explain(match, matchutil.TypeName(p), details...)
 }
 
 func NewSliceElems[T any](m ...Matcher[T]) SliceElems[T] {
@@ -138,6 +188,14 @@ func (s SliceElems[T]) Match(got []T) bool {
 	return true
 }
 
-func (s SliceElems[T]) Explain(_ []T) string {
-	return "" // TODO
+func (s SliceElems[T]) Explain(got []T) string {
+	match := s.Match(got)
+	var details []string
+	lenEq := NewEqual(len(s.M))
+	details = append(details, fmt.Sprintf("length:\n%s", matchutil.Indent(Explain(len(got), lenEq), 1)))
+	for i := range min(len(got), len(s.M)) {
+		detail := fmt.Sprintf("index %d:\n%s", i, matchutil.Indent(Explain(got[i], s.M[i]), 1))
+		details = append(details, detail)
+	}
+	return matchutil.Explain(match, matchutil.TypeName(s), details...)
 }
