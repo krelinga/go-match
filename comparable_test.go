@@ -28,6 +28,18 @@ func TestEqual(t *testing.T) {
 			want: false,
 		},
 		{
+			name: "match_func",
+			m: match.NewEqual("hello"),
+			val:  "hello",
+			want: true,
+		},
+		{
+			name: "no_match_func",
+			m: match.NewEqual("hello"),
+			val:  "world",
+			want: false,
+		},
+		{
 			name: "match_format",
 			m:    match.Equal[string]{X: "hello", Format: strings.ToUpper},
 			val:  "hello",
