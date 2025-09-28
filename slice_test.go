@@ -7,6 +7,11 @@ import (
 )
 
 func TestSliceElems(t *testing.T) {
+	t.Run("implements", func(t *testing.T) {
+		assertImplements[match.SliceElems[int], match.Matcher[[]int]](t)
+		assertImplements[match.SliceElems[int], match.Explainer[[]int]](t)
+	})
+	
 	t.Run("Ordered", func(t *testing.T) {
 		m := match.NewSliceElems(
 			match.Equal[int]{X: 1},

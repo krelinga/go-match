@@ -8,12 +8,16 @@ import (
 )
 
 func TestEqual(t *testing.T) {
-	
+	t.Run("implements", func(t *testing.T) {
+		assertImplements[match.Equal[int], match.Matcher[int]](t)
+		assertImplements[match.Equal[int], match.Explainer[int]](t)
+	})
+
 	goldie := newGoldie(t)
 	tests := []struct {
-		name    string
-		m match.Equal[string]
-		val string
+		name string
+		m    match.Equal[string]
+		val  string
 		want bool
 	}{
 		{
@@ -30,13 +34,13 @@ func TestEqual(t *testing.T) {
 		},
 		{
 			name: "match_func",
-			m: match.NewEqual("hello"),
+			m:    match.NewEqual("hello"),
 			val:  "hello",
 			want: true,
 		},
 		{
 			name: "no_match_func",
-			m: match.NewEqual("hello"),
+			m:    match.NewEqual("hello"),
 			val:  "world",
 			want: false,
 		},
@@ -62,4 +66,11 @@ func TestEqual(t *testing.T) {
 			goldie.Assert(t, tt.name, []byte(match.Explain(tt.val, tt.m)))
 		})
 	}
+}
+
+func TestNotEqual(t *testing.T) {
+	t.Run("implements", func(t *testing.T) {
+		assertImplements[match.NotEqual[int], match.Matcher[int]](t)
+		assertImplements[match.NotEqual[int], match.Explainer[int]](t)
+	})
 }
