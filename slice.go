@@ -102,7 +102,7 @@ func (s SliceElems[T]) unorderedDetails(got []T) []string {
 	var mUnmatched []string
 	for mI := range s.M {
 		if !used[mI] {
-			matcherStr := matchutil.Indent(fmt.Sprintf("%s %s", matchutil.Emoji(false), matchutil.MatcherString(s.M[mI])), 1)
+			matcherStr := matchutil.Indent(fmt.Sprintf("%s %s", matchutil.Emoji(false), matchutil.Repr(s.M[mI])), 1)
 			mUnmatched = append(mUnmatched, fmt.Sprintf("index %d:\n%s", mI, matcherStr))
 		}
 	}
