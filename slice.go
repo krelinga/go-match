@@ -145,3 +145,28 @@ func (s SliceLen[T]) Explain(got []T) string {
 	details = append(details, Explain(len(got), s.M))
 	return matchutil.Explain(match, matchutil.TypeName(s), details...)
 }
+
+func NewSliceNil[T any]() SliceNil[T] {
+	return SliceNil[T]{}
+}
+
+type SliceNil[T any] struct {
+	Format func(t []T) string
+}
+
+func (_ SliceNil[T]) Match(got []T) bool {
+	return got == nil
+}
+
+func (sn SliceNil[T]) Explain(got []T) string {
+	match := sn.Match(got)
+	var details []string
+	expected := "got == nil"
+	if match {
+		details = append(details, expected)
+	} else {
+		actual := fmt.Sprintf("got == %s", matchutil.FormatWith(got, sn.Format))
+		details = append(details, matchutil.ActualVsExpected(actual, expected))
+	}
+	return matchutil.Explain(match, matchutil.TypeName(sn), details...)
+}

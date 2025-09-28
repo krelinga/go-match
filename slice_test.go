@@ -52,3 +52,12 @@ func TestSliceLen(t *testing.T) {
 	t.Logf("\n%s", match.Explain([]string{"a", "b"}, m))
 	t.Logf("\n%s", match.Explain([]string{"a", "b", "c", "d"}, m))
 }
+
+func TestSliceNil(t *testing.T) {
+	m := match.SliceNil[string]{}
+	if !match.Match(nil, m) {
+		t.Error("Expected match")
+	}
+	t.Logf("\n%s", match.Explain(nil, m))
+	t.Logf("\n%s", match.Explain([]string{}, m))
+}
