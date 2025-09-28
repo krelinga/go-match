@@ -8,15 +8,7 @@ import (
 	"github.com/krelinga/go-match"
 )
 
-// intCompare is a simple comparison function for testing
-func intCompare(x, y int) int {
-	return cmp.Compare(x, y)
-}
 
-// stringCompare is a simple comparison function for testing strings
-func stringCompare(x, y string) int {
-	return cmp.Compare(x, y)
-}
 
 func TestEqualFunc(t *testing.T) {
 	t.Run("implements", func(t *testing.T) {
@@ -33,37 +25,37 @@ func TestEqualFunc(t *testing.T) {
 	}{
 		{
 			name: "match",
-			m:    match.EqualFunc[string]{X: "hello", Func: stringCompare},
+			m:    match.EqualFunc[string]{X: "hello", Func: cmp.Compare[string]},
 			val:  "hello",
 			want: true,
 		},
 		{
 			name: "no_match",
-			m:    match.EqualFunc[string]{X: "hello", Func: stringCompare},
+			m:    match.EqualFunc[string]{X: "hello", Func: cmp.Compare[string]},
 			val:  "world",
 			want: false,
 		},
 		{
 			name: "match_func",
-			m:    match.NewEqualFunc("hello", stringCompare),
+			m:    match.NewEqualFunc("hello", cmp.Compare[string]),
 			val:  "hello",
 			want: true,
 		},
 		{
 			name: "no_match_func",
-			m:    match.NewEqualFunc("hello", stringCompare),
+			m:    match.NewEqualFunc("hello", cmp.Compare[string]),
 			val:  "world",
 			want: false,
 		},
 		{
 			name: "match_format",
-			m:    match.EqualFunc[string]{X: "hello", Func: stringCompare, Format: strings.ToUpper},
+			m:    match.EqualFunc[string]{X: "hello", Func: cmp.Compare[string], Format: strings.ToUpper},
 			val:  "hello",
 			want: true,
 		},
 		{
 			name: "no_match_format",
-			m:    match.EqualFunc[string]{X: "hello", Func: stringCompare, Format: strings.ToUpper},
+			m:    match.EqualFunc[string]{X: "hello", Func: cmp.Compare[string], Format: strings.ToUpper},
 			val:  "world",
 			want: false,
 		},
@@ -104,37 +96,37 @@ func TestNotEqualFunc(t *testing.T) {
 	}{
 		{
 			name: "match",
-			m:    match.NotEqualFunc[string]{X: "hello", Func: stringCompare},
+			m:    match.NotEqualFunc[string]{X: "hello", Func: cmp.Compare[string]},
 			val:  "world",
 			want: true,
 		},
 		{
 			name: "no_match",
-			m:    match.NotEqualFunc[string]{X: "hello", Func: stringCompare},
+			m:    match.NotEqualFunc[string]{X: "hello", Func: cmp.Compare[string]},
 			val:  "hello",
 			want: false,
 		},
 		{
 			name: "match_func",
-			m:    match.NewNotEqualFunc("hello", stringCompare),
+			m:    match.NewNotEqualFunc("hello", cmp.Compare[string]),
 			val:  "world",
 			want: true,
 		},
 		{
 			name: "no_match_func",
-			m:    match.NewNotEqualFunc("hello", stringCompare),
+			m:    match.NewNotEqualFunc("hello", cmp.Compare[string]),
 			val:  "hello",
 			want: false,
 		},
 		{
 			name: "match_format",
-			m:    match.NotEqualFunc[string]{X: "hello", Func: stringCompare, Format: strings.ToUpper},
+			m:    match.NotEqualFunc[string]{X: "hello", Func: cmp.Compare[string], Format: strings.ToUpper},
 			val:  "world",
 			want: true,
 		},
 		{
 			name: "no_match_format",
-			m:    match.NotEqualFunc[string]{X: "hello", Func: stringCompare, Format: strings.ToUpper},
+			m:    match.NotEqualFunc[string]{X: "hello", Func: cmp.Compare[string], Format: strings.ToUpper},
 			val:  "hello",
 			want: false,
 		},
@@ -175,31 +167,31 @@ func TestLessThanFunc(t *testing.T) {
 	}{
 		{
 			name: "match",
-			m:    match.LessThanFunc[int]{X: 10, Func: intCompare},
+			m:    match.LessThanFunc[int]{X: 10, Func: cmp.Compare[int]},
 			val:  5,
 			want: true,
 		},
 		{
 			name: "no_match_equal",
-			m:    match.LessThanFunc[int]{X: 10, Func: intCompare},
+			m:    match.LessThanFunc[int]{X: 10, Func: cmp.Compare[int]},
 			val:  10,
 			want: false,
 		},
 		{
 			name: "no_match_greater",
-			m:    match.LessThanFunc[int]{X: 10, Func: intCompare},
+			m:    match.LessThanFunc[int]{X: 10, Func: cmp.Compare[int]},
 			val:  15,
 			want: false,
 		},
 		{
 			name: "match_func",
-			m:    match.NewLessThanFunc(10, intCompare),
+			m:    match.NewLessThanFunc(10, cmp.Compare[int]),
 			val:  5,
 			want: true,
 		},
 		{
 			name: "no_match_func",
-			m:    match.NewLessThanFunc(10, intCompare),
+			m:    match.NewLessThanFunc(10, cmp.Compare[int]),
 			val:  15,
 			want: false,
 		},
@@ -240,31 +232,31 @@ func TestLessThanOrEqualFunc(t *testing.T) {
 	}{
 		{
 			name: "match_less",
-			m:    match.LessThanOrEqualFunc[int]{X: 10, Func: intCompare},
+			m:    match.LessThanOrEqualFunc[int]{X: 10, Func: cmp.Compare[int]},
 			val:  5,
 			want: true,
 		},
 		{
 			name: "match_equal",
-			m:    match.LessThanOrEqualFunc[int]{X: 10, Func: intCompare},
+			m:    match.LessThanOrEqualFunc[int]{X: 10, Func: cmp.Compare[int]},
 			val:  10,
 			want: true,
 		},
 		{
 			name: "no_match",
-			m:    match.LessThanOrEqualFunc[int]{X: 10, Func: intCompare},
+			m:    match.LessThanOrEqualFunc[int]{X: 10, Func: cmp.Compare[int]},
 			val:  15,
 			want: false,
 		},
 		{
 			name: "match_func",
-			m:    match.NewLessThanOrEqualFunc(10, intCompare),
+			m:    match.NewLessThanOrEqualFunc(10, cmp.Compare[int]),
 			val:  5,
 			want: true,
 		},
 		{
 			name: "no_match_func",
-			m:    match.NewLessThanOrEqualFunc(10, intCompare),
+			m:    match.NewLessThanOrEqualFunc(10, cmp.Compare[int]),
 			val:  15,
 			want: false,
 		},
@@ -305,31 +297,31 @@ func TestGreaterThanFunc(t *testing.T) {
 	}{
 		{
 			name: "match",
-			m:    match.GreaterThanFunc[int]{X: 10, Func: intCompare},
+			m:    match.GreaterThanFunc[int]{X: 10, Func: cmp.Compare[int]},
 			val:  15,
 			want: true,
 		},
 		{
 			name: "no_match_equal",
-			m:    match.GreaterThanFunc[int]{X: 10, Func: intCompare},
+			m:    match.GreaterThanFunc[int]{X: 10, Func: cmp.Compare[int]},
 			val:  10,
 			want: false,
 		},
 		{
 			name: "no_match_less",
-			m:    match.GreaterThanFunc[int]{X: 10, Func: intCompare},
+			m:    match.GreaterThanFunc[int]{X: 10, Func: cmp.Compare[int]},
 			val:  5,
 			want: false,
 		},
 		{
 			name: "match_func",
-			m:    match.NewGreaterThanFunc(10, intCompare),
+			m:    match.NewGreaterThanFunc(10, cmp.Compare[int]),
 			val:  15,
 			want: true,
 		},
 		{
 			name: "no_match_func",
-			m:    match.NewGreaterThanFunc(10, intCompare),
+			m:    match.NewGreaterThanFunc(10, cmp.Compare[int]),
 			val:  5,
 			want: false,
 		},
@@ -370,31 +362,31 @@ func TestGreaterThanOrEqualFunc(t *testing.T) {
 	}{
 		{
 			name: "match_greater",
-			m:    match.GreaterThanOrEqualFunc[int]{X: 10, Func: intCompare},
+			m:    match.GreaterThanOrEqualFunc[int]{X: 10, Func: cmp.Compare[int]},
 			val:  15,
 			want: true,
 		},
 		{
 			name: "match_equal",
-			m:    match.GreaterThanOrEqualFunc[int]{X: 10, Func: intCompare},
+			m:    match.GreaterThanOrEqualFunc[int]{X: 10, Func: cmp.Compare[int]},
 			val:  10,
 			want: true,
 		},
 		{
 			name: "no_match",
-			m:    match.GreaterThanOrEqualFunc[int]{X: 10, Func: intCompare},
+			m:    match.GreaterThanOrEqualFunc[int]{X: 10, Func: cmp.Compare[int]},
 			val:  5,
 			want: false,
 		},
 		{
 			name: "match_func",
-			m:    match.NewGreaterThanOrEqualFunc(10, intCompare),
+			m:    match.NewGreaterThanOrEqualFunc(10, cmp.Compare[int]),
 			val:  15,
 			want: true,
 		},
 		{
 			name: "no_match_func",
-			m:    match.NewGreaterThanOrEqualFunc(10, intCompare),
+			m:    match.NewGreaterThanOrEqualFunc(10, cmp.Compare[int]),
 			val:  5,
 			want: false,
 		},
