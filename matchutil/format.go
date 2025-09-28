@@ -52,3 +52,10 @@ func ActualVsExpected(actual, expected string) string {
 	fmt.Fprintf(sb, "Expected: %s", expected)
 	return sb.String()
 }
+
+func MatcherString(m any) string {
+	if ms, ok := m.(fmt.Stringer); ok {
+		return ms.String()
+	}
+	return fmt.Sprintf("%s{...}", TypeName(m))
+}
