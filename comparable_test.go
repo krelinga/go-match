@@ -8,6 +8,7 @@ import (
 )
 
 func TestEqual(t *testing.T) {
+	
 	goldie := newGoldie(t)
 	tests := []struct {
 		name    string
