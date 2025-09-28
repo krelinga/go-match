@@ -27,7 +27,7 @@ func (lt LessThan[T]) Explain(got T) string {
 	if match {
 		details = append(details, expected)
 	} else {
-		actual := fmt.Sprintf("got >= %s", matchutil.FormatWith(lt.X, lt.Format))
+		actual := fmt.Sprintf("got == %s", matchutil.FormatWith(got, lt.Format))
 		details = append(details, matchutil.ActualVsExpected(actual, expected))
 	}
 	return matchutil.Explain(match, matchutil.TypeName(lt), details...)
@@ -53,7 +53,7 @@ func (lte LessThanOrEqual[T]) Explain(got T) string {
 	if match {
 		details = append(details, expected)
 	} else {
-		actual := fmt.Sprintf("got > %s", matchutil.FormatWith(lte.X, lte.Format))
+		actual := fmt.Sprintf("got == %s", matchutil.FormatWith(got, lte.Format))
 		details = append(details, matchutil.ActualVsExpected(actual, expected))
 	}
 	return matchutil.Explain(match, matchutil.TypeName(lte), details...)
@@ -79,7 +79,7 @@ func (gt GreaterThan[T]) Explain(got T) string {
 	if match {
 		details = append(details, expected)
 	} else {
-		actual := fmt.Sprintf("got <= %s", matchutil.FormatWith(gt.X, gt.Format))
+		actual := fmt.Sprintf("got == %s", matchutil.FormatWith(got, gt.Format))
 		details = append(details, matchutil.ActualVsExpected(actual, expected))
 	}
 	return matchutil.Explain(match, matchutil.TypeName(gt), details...)
@@ -105,7 +105,7 @@ func (gte GreaterThanOrEqual[T]) Explain(got T) string {
 	if match {
 		details = append(details, expected)
 	} else {
-		actual := fmt.Sprintf("got < %s", matchutil.FormatWith(gte.X, gte.Format))
+		actual := fmt.Sprintf("got == %s", matchutil.FormatWith(got, gte.Format))
 		details = append(details, matchutil.ActualVsExpected(actual, expected))
 	}
 	return matchutil.Explain(match, matchutil.TypeName(gte), details...)
