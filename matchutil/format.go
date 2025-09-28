@@ -53,23 +53,9 @@ func ActualVsExpected(actual, expected string) string {
 	return sb.String()
 }
 
-func Repr(m any) string {
-	if ms, ok := m.(fmt.Stringer); ok {
-		return ms.String()
+func Describe(in any) string {
+	if s, ok := in.(fmt.Stringer); ok {
+		return s.String()
 	}
-	return fmt.Sprintf("%s{%v}", TypeName(m), m)
-}
-
-func StructField(name, value string) string {
-	return fmt.Sprintf("%s: %s,", name, value)
-}
-
-func StructRepr(instance any, fields ...string) string {
-	sb := &strings.Builder{}
-	fmt.Fprintf(sb, "%s{\n", TypeName(instance))
-	for _, field := range fields {
-		fmt.Fprintf(sb, "%s\n", Indent(field, 1))
-	}
-	fmt.Fprintf(sb, "}")
-	return sb.String()
+	return fmt.Sprintf("%#v", in)
 }

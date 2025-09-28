@@ -32,14 +32,6 @@ func (e Equal[T]) Explain(got T) string {
 	return matchutil.Explain(match, matchutil.TypeName(e), details...)
 }
 
-func (e Equal[T]) String() string {
-	return matchutil.StructRepr(
-		e,
-		matchutil.StructField("X", matchutil.FormatWith(e.X, e.Format)),
-		matchutil.StructField("Format", matchutil.Repr(e.Format)),
-	)
-}
-
 func NewNotEqual[T comparable](x T) NotEqual[T] {
 	return NotEqual[T]{X: x}
 }
