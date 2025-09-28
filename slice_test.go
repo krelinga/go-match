@@ -6,20 +6,39 @@ import (
 	"github.com/krelinga/go-match"
 )
 
-
 func TestSliceElems(t *testing.T) {
-	m := match.NewSliceElems(
-		match.Equal[int]{X: 1},
-		match.Equal[int]{X: 2},
-		match.Equal[int]{X: 3},
-	)
-	if !match.Match([]int{1, 2, 3}, m) {
-		t.Error("Expected match")
-	}
-	t.Logf("\n%s", match.Explain([]int{1, 2, 3}, m))
-	t.Logf("\n%s", match.Explain([]int{1, 2, 4}, m))
-	t.Logf("\n%s", match.Explain([]int{1, 2, 3, 4}, m))
-	t.Logf("\n%s", match.Explain([]int{1, 2}, m))
+	t.Run("Ordered", func(t *testing.T) {
+		m := match.NewSliceElems(
+			match.Equal[int]{X: 1},
+			match.Equal[int]{X: 2},
+			match.Equal[int]{X: 3},
+		)
+		if !match.Match([]int{1, 2, 3}, m) {
+			t.Error("Expected match")
+		}
+		t.Logf("\n%s", match.Explain([]int{1, 2, 3}, m))
+		t.Logf("\n%s", match.Explain([]int{1, 2, 4}, m))
+		t.Logf("\n%s", match.Explain([]int{1, 2, 3, 4}, m))
+		t.Logf("\n%s", match.Explain([]int{1, 2}, m))
+	})
+
+	t.Run("Unordered", func(t *testing.T) {
+		m := match.SliceElems[int]{
+			M: []match.Matcher[int]{
+				match.Equal[int]{X: 1},
+				match.Equal[int]{X: 2},
+				match.Equal[int]{X: 3},
+			},
+			InAnyOrder: true,
+		}
+		if !match.Match([]int{3, 1, 2}, m) {
+			t.Error("Expected match")
+		}
+		t.Logf("\n%s", match.Explain([]int{3, 1, 2}, m))
+		t.Logf("\n%s", match.Explain([]int{1, 2, 4}, m))
+		t.Logf("\n%s", match.Explain([]int{1, 2, 3, 4}, m))
+		t.Logf("\n%s", match.Explain([]int{1, 2}, m))
+	})
 }
 
 func TestSliceLen(t *testing.T) {
