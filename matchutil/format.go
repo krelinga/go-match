@@ -44,7 +44,7 @@ func Explain(matched bool, matcherName string, details ...string) string {
 		sb.WriteString(":")
 		for _, detail := range details {
 			sb.WriteString("\n")
-			sb.WriteString(IndentBy(strings.TrimSpace(detail), 1))
+			sb.WriteString(Indent(detail))
 		}
 	}
 	return sb.String()

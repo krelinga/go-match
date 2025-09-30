@@ -1,12 +1,12 @@
 ❌ match.AllOf:
    matcher 0:
-   ✅ match.LessThan:
+      ✅ match.LessThan:
          got < 100
    matcher 1:
-   ❌ match.GreaterThan:
+      ❌ match.GreaterThan:
          Expected: got > 50
          Actual:   got == 42
    matcher 2:
-   ❌ match.NotEqual:
+      ❌ match.NotEqual:
          Expected: got != 42
          Actual:   got == 42

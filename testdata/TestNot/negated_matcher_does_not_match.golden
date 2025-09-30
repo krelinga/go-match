@@ -1,4 +1,4 @@
 ❌ match.Not:
    negated matcher:
-   ✅ match.GreaterThan:
+      ✅ match.GreaterThan:
          got > 10

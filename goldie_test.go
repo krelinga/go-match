@@ -8,7 +8,7 @@ import (
 
 func newGoldie(t *testing.T) *goldie.Goldie {
 	return goldie.New(t,
-		goldie.WithDiffEngine(goldie.ColoredDiff),
+		// goldie.WithDiffEngine(goldie.ColoredDiff),
 		goldie.WithTestNameForDir(true),
 	)
 }
