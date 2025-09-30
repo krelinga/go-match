@@ -2,7 +2,6 @@ package matchutil
 
 import (
 	"fmt"
-	"reflect"
 	"strings"
 )
 
@@ -13,24 +12,17 @@ func Emoji(matched bool) string {
 	return "❌"
 }
 
-func TypeName(x any) string {
-	return reflect.TypeOf(x).String()
-}
-
-func FormatWith[T any](t T, format func(t T) string) string {
-	if format != nil {
-		return format(t)
-	}
-	return fmt.Sprintf("%v", t)
-}
-
-func Indent(s string, level int) string {
+func IndentBy(s string, level int) string {
 	prefix := strings.Repeat(" ", level*3)
 	lines := strings.Split(s, "\n")
 	for i, line := range lines {
 		lines[i] = prefix + line
 	}
 	return strings.Join(lines, "\n")
+}
+
+func Indent(s string) string {
+	return IndentBy(s, 1)
 }
 
 func Explain(matched bool, matcherName string, details ...string) string {
@@ -40,7 +32,7 @@ func Explain(matched bool, matcherName string, details ...string) string {
 		sb.WriteString(":")
 		for _, detail := range details {
 			sb.WriteString("\n")
-			sb.WriteString(Indent(strings.TrimSpace(detail), 1))
+			sb.WriteString(Indent(detail))
 		}
 	}
 	return sb.String()
@@ -48,14 +40,11 @@ func Explain(matched bool, matcherName string, details ...string) string {
 
 func ActualVsExpected(actual, expected string) string {
 	sb := &strings.Builder{}
-	fmt.Fprintf(sb, "Actual:   %s\n", actual)
-	fmt.Fprintf(sb, "Expected: %s", expected)
+	fmt.Fprintf(sb, "Expected: %s\n", expected)
+	fmt.Fprintf(sb, "Actual:   %s", actual)
 	return sb.String()
 }
 
-func Describe(in any) string {
-	if s, ok := in.(fmt.Stringer); ok {
-		return s.String()
-	}
-	return fmt.Sprintf("%#v", in)
+func DefaultFormat(t any) string {
+	return fmt.Sprintf("%#v", t)
 }

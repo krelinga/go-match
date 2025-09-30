@@ -1,3 +1,0 @@
-❌ match.Equal[string]:
-   Actual:   got == WORLD
-   Expected: got == HELLO

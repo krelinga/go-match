@@ -1,0 +1,5 @@
+✅ match.Not:
+   negated matcher:
+      ❌ match.LessThan:
+         Expected: got < 10
+         Actual:   got == 42

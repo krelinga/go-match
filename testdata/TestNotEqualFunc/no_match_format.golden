@@ -1,3 +1,0 @@
-❌ match.NotEqualFunc[string]:
-   Actual:   got == HELLO
-   Expected: got != HELLO

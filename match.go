@@ -1,117 +1,15 @@
 package match
 
-import (
-	"fmt"
-
-	"github.com/krelinga/go-match/matchutil"
-)
-
 type Matcher[T any] interface {
-	Match(got T) bool
+	Match(got T) (matched bool, explanation string)
 }
 
-type Explainer[T any] interface {
-	Explain(got T) string
+type MatcherFunc[T any] func(T) (bool, string)
+
+func (f MatcherFunc[T]) Match(v T) (bool, string) {
+	return f(v)
 }
 
-func Match[T any](got T, matcher Matcher[T]) bool {
+func Match[T any](got T, matcher Matcher[T]) (bool, string) {
 	return matcher.Match(got)
-}
-
-func Explain[T any](got T, matcher Matcher[T]) string {
-	if explainer, ok := matcher.(Explainer[T]); ok {
-		return explainer.Explain(got)
-	}
-	return matchutil.Explain(matcher.Match(got), matchutil.TypeName(matcher))
-}
-
-func NewAllOf[T any](m ...Matcher[T]) AllOf[T] {
-	return AllOf[T]{M: m}
-}
-
-type AllOf[T any] struct {
-	M []Matcher[T]
-}
-
-func (a AllOf[T]) Match(got T) bool {
-	for _, m := range a.M {
-		if !m.Match(got) {
-			return false
-		}
-	}
-	return true
-}
-
-func (a AllOf[T]) Explain(got T) string {
-	match := a.Match(got)
-	var details []string
-	if match {
-		details = append(details, "matched all conditions")
-	}
-	if !match {
-		details = append(details, "did not match all conditions")
-	}
-	for i, m := range a.M {
-		detail := fmt.Sprintf("index %d:\n%s", i, matchutil.Indent(Explain(got, m), 1))
-		details = append(details, detail)
-	}
-	return matchutil.Explain(match, matchutil.TypeName(a), details...)
-}
-
-type AnyOf[T any] struct {
-	M []Matcher[T]
-}
-
-func NewAnyOf[T any](m ...Matcher[T]) AnyOf[T] {
-	return AnyOf[T]{M: m}
-}
-
-func (a AnyOf[T]) Match(got T) bool {
-	for _, m := range a.M {
-		if m.Match(got) {
-			return true
-		}
-	}
-	return false
-}
-
-func (a AnyOf[T]) Explain(got T) string {
-	match := a.Match(got)
-	var details []string
-	if match {
-		details = append(details, "matched at least one condition")
-	} else {
-		details = append(details, "did not match any condition")
-	}
-	for i, m := range a.M {
-		detail := fmt.Sprintf("index %d:\n%s", i, matchutil.Indent(Explain(got, m), 1))
-		details = append(details, detail)
-	}
-	return matchutil.Explain(match, matchutil.TypeName(a), details...)
-}
-
-func NewWhenDeref[T any](m Matcher[T]) WhenDeref[T] {
-	return WhenDeref[T]{M: m}
-}
-
-type WhenDeref[T any] struct {
-	M Matcher[T]
-}
-
-func (p WhenDeref[T]) Match(got *T) bool {
-	if got == nil {
-		return false
-	}
-	return p.M.Match(*got)
-}
-
-func (p WhenDeref[T]) Explain(got *T) string {
-	match := p.Match(got)
-	var details []string
-	if got == nil {
-		details = append(details, "got == nil")
-	} else {
-		details = append(details, "got != nil", Explain(*got, p.M))
-	}
-	return matchutil.Explain(match, matchutil.TypeName(p), details...)
 }

@@ -1,3 +1,0 @@
-❌ match.GreaterThan[int]:
-   Actual:   got == 10
-   Expected: got > 10
