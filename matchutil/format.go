@@ -52,8 +52,8 @@ func Explain(matched bool, matcherName string, details ...string) string {
 
 func ActualVsExpected(actual, expected string) string {
 	sb := &strings.Builder{}
-	fmt.Fprintf(sb, "Actual:   %s\n", actual)
-	fmt.Fprintf(sb, "Expected: %s", expected)
+	fmt.Fprintf(sb, "Expected: %s\n", expected)
+	fmt.Fprintf(sb, "Actual:   %s", actual)
 	return sb.String()
 }
 
