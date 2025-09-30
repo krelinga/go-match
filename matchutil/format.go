@@ -2,7 +2,6 @@ package matchutil
 
 import (
 	"fmt"
-	"reflect"
 	"strings"
 )
 
@@ -11,17 +10,6 @@ func Emoji(matched bool) string {
 		return "✅"
 	}
 	return "❌"
-}
-
-func TypeName(x any) string {
-	return reflect.TypeOf(x).String()
-}
-
-func FormatWith[T any](t T, format func(t T) string) string {
-	if format != nil {
-		return format(t)
-	}
-	return fmt.Sprintf("%v", t)
 }
 
 func IndentBy(s string, level int) string {
@@ -55,13 +43,6 @@ func ActualVsExpected(actual, expected string) string {
 	fmt.Fprintf(sb, "Expected: %s\n", expected)
 	fmt.Fprintf(sb, "Actual:   %s", actual)
 	return sb.String()
-}
-
-func Describe(in any) string {
-	if s, ok := in.(fmt.Stringer); ok {
-		return s.String()
-	}
-	return fmt.Sprintf("%#v", in)
 }
 
 func DefaultFormat(t any) string {
