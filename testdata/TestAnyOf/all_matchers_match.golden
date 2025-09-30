@@ -1,0 +1,10 @@
+✅ match.AnyOf:
+   matcher 0:
+   ✅ match.LessThan:
+         got < 100
+   matcher 1:
+   ✅ match.GreaterThan:
+         got > 10
+   matcher 2:
+   ✅ match.NotEqual:
+         got != 50

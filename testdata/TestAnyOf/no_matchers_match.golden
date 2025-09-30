@@ -1,0 +1,13 @@
+❌ match.AnyOf:
+   matcher 0:
+   ❌ match.LessThan:
+         Expected: got < 10
+         Actual:   got == 42
+   matcher 1:
+   ❌ match.GreaterThan:
+         Expected: got > 100
+         Actual:   got == 42
+   matcher 2:
+   ❌ match.Equal:
+         Expected: got == 50
+         Actual:   got == 42

@@ -1,0 +1,3 @@
+❌ match.LessThan:
+   Expected: got < 42
+   Actual:   got == 42
