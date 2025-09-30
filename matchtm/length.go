@@ -6,9 +6,9 @@ import (
 	"github.com/krelinga/go-typemap"
 )
 
-func Length[T any](matcher match.Matcher[int], ht typemap.Length[T]) match.Matcher[T] {
+func Length[T any](tm typemap.Length[T], matcher match.Matcher[int]) match.Matcher[T] {
 	return match.MatcherFunc[T](func(v T) (matched bool, explanation string) {
-		length := ht.Length(v)
+		length := tm.Length(v)
 		matched, e := matcher.Match(length)
 		explanation = matchutil.Explain(matched, "matchtm.Length", e)
 		return

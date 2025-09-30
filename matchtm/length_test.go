@@ -19,7 +19,7 @@ func TestLength(t *testing.T) {
 			name: "slice_matched",
 			run: func() (bool, string) {
 				s := []string{"a", "b", "c"}
-				m := matchtm.Length(match.GreaterThan(2), typemap.ForSlice[string]{})
+				m := matchtm.Length(typemap.ForSlice[string]{}, match.GreaterThan(2))
 				return m.Match(s)
 			},
 			want: true,
@@ -28,7 +28,7 @@ func TestLength(t *testing.T) {
 			name: "slice_not_matched",
 			run: func() (bool, string) {
 				s := []string{"a", "b", "c"}
-				m := matchtm.Length(match.LessThan(2), typemap.ForSlice[string]{})
+				m := matchtm.Length(typemap.ForSlice[string]{}, match.LessThan(2))
 				return m.Match(s)
 			},
 			want: false,
@@ -37,7 +37,7 @@ func TestLength(t *testing.T) {
 			name: "map_matched",
 			run: func() (bool, string) {
 				m := map[string]int{"a": 1, "b": 2, "c": 3}
-				matcher := matchtm.Length(match.GreaterThan(2), typemap.ForMap[string, int]{})
+				matcher := matchtm.Length(typemap.ForMap[string, int]{}, match.GreaterThan(2))
 				return matcher.Match(m)
 			},
 			want: true,
@@ -46,7 +46,7 @@ func TestLength(t *testing.T) {
 			name: "map_not_matched",
 			run: func() (bool, string) {
 				m := map[string]int{"a": 1, "b": 2, "c": 3}
-				matcher := matchtm.Length(match.LessThan(2), typemap.ForMap[string, int]{})
+				matcher := matchtm.Length(typemap.ForMap[string, int]{}, match.LessThan(2))
 				return matcher.Match(m)
 			},
 			want: false,
@@ -55,7 +55,7 @@ func TestLength(t *testing.T) {
 			name: "string_matched",
 			run: func() (bool, string) {
 				s := "hello"
-				m := matchtm.Length(match.GreaterThan(3), typemap.ForString{})
+				m := matchtm.Length(typemap.ForString{}, match.GreaterThan(3))
 				return m.Match(s)
 			},
 			want: true,
@@ -64,7 +64,7 @@ func TestLength(t *testing.T) {
 			name: "string_not_matched",
 			run: func() (bool, string) {
 				s := "hello"
-				m := matchtm.Length(match.LessThan(3), typemap.ForString{})
+				m := matchtm.Length(typemap.ForString{}, match.LessThan(3))
 				return m.Match(s)
 			},
 			want: false,
