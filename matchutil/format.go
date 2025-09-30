@@ -24,13 +24,17 @@ func FormatWith[T any](t T, format func(t T) string) string {
 	return fmt.Sprintf("%v", t)
 }
 
-func Indent(s string, level int) string {
+func IndentBy(s string, level int) string {
 	prefix := strings.Repeat(" ", level*3)
 	lines := strings.Split(s, "\n")
 	for i, line := range lines {
 		lines[i] = prefix + line
 	}
 	return strings.Join(lines, "\n")
+}
+
+func Indent(s string) string {
+	return IndentBy(s, 1)
 }
 
 func Explain(matched bool, matcherName string, details ...string) string {
@@ -40,7 +44,7 @@ func Explain(matched bool, matcherName string, details ...string) string {
 		sb.WriteString(":")
 		for _, detail := range details {
 			sb.WriteString("\n")
-			sb.WriteString(Indent(strings.TrimSpace(detail), 1))
+			sb.WriteString(IndentBy(strings.TrimSpace(detail), 1))
 		}
 	}
 	return sb.String()
@@ -58,4 +62,8 @@ func Describe(in any) string {
 		return s.String()
 	}
 	return fmt.Sprintf("%#v", in)
+}
+
+func DefaultFormat(t any) string {
+	return fmt.Sprintf("%#v", t)
 }
