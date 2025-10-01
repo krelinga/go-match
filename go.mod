@@ -3,7 +3,7 @@ module github.com/krelinga/go-match
 go 1.24.3
 
 require (
-	github.com/krelinga/go-typemap v0.0.6
+	github.com/krelinga/go-typemap v0.0.7
 	github.com/sebdah/goldie/v2 v2.7.1
 )
 
