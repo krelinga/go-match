@@ -1,0 +1,3 @@
+❌ match.SliceIsNil:
+   Expected: got == nil
+   Actual:   got = []
