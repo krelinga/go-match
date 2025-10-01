@@ -2,103 +2,66 @@ package match
 
 import (
 	"cmp"
-	"fmt"
 
-	"github.com/krelinga/go-match/matchutil"
+	"github.com/krelinga/go-typemap"
 )
 
 func Equal[T comparable](want T) Matcher[T] {
-	return MatcherFunc[T](func(got T) (matched bool, explanation string) {
-		matched = got == want
-		expected := fmt.Sprintf("got == %s", matchutil.DefaultFormat(want))
-		var info string
-		if !matched {
-			actual := fmt.Sprintf("got == %s", matchutil.DefaultFormat(got))
-			info = matchutil.ActualVsExpected(actual, expected)
-		} else {
-			info = expected
-		}
-		explanation = matchutil.Explain(matched, "match.Equal", info)
-		return
-	})
+	tm := struct {
+		typemap.StringFunc[T]
+		typemap.DefaultCompare[T]
+	}{
+		StringFunc: DefaultString[T](),
+	}
+	return equalImpl(tm, "match.Equal", want)
 }
 
 func NotEqual[T comparable](other T) Matcher[T] {
-	return MatcherFunc[T](func(got T) (matched bool, explanation string) {
-		matched = got != other
-		expected := fmt.Sprintf("got != %s", matchutil.DefaultFormat(other))
-		var info string
-		if !matched {
-			actual := fmt.Sprintf("got == %s", matchutil.DefaultFormat(got))
-			info = matchutil.ActualVsExpected(actual, expected)
-		} else {
-			info = expected
-		}
-		explanation = matchutil.Explain(matched, "match.NotEqual", info)
-		return
-	})
+	tm := struct {
+		typemap.StringFunc[T]
+		typemap.DefaultCompare[T]
+	}{
+		StringFunc: DefaultString[T](),
+	}
+	return notEqualImpl(tm, "match.NotEqual", other)
 }
 
 func LessThan[T cmp.Ordered](other T) Matcher[T] {
-	return MatcherFunc[T](func(got T) (matched bool, explanation string) {
-		matched = got < other
-		expected := fmt.Sprintf("got < %s", matchutil.DefaultFormat(other))
-		var info string
-		if !matched {
-			actual := fmt.Sprintf("got == %s", matchutil.DefaultFormat(got))
-			info = matchutil.ActualVsExpected(actual, expected)
-		} else {
-			info = expected
-		}
-		explanation = matchutil.Explain(matched, "match.LessThan", info)
-		return
-	})
+	tm := struct {
+		typemap.StringFunc[T]
+		typemap.DefaultOrder[T]
+	}{
+		StringFunc: DefaultString[T](),
+	}
+	return lessThanImpl(tm, "match.LessThan", other)
 }
 
 func LessThanOrEqual[T cmp.Ordered](other T) Matcher[T] {
-	return MatcherFunc[T](func(got T) (matched bool, explanation string) {
-		matched = got <= other
-		expected := fmt.Sprintf("got <= %s", matchutil.DefaultFormat(other))
-		var info string
-		if !matched {
-			actual := fmt.Sprintf("got == %s", matchutil.DefaultFormat(got))
-			info = matchutil.ActualVsExpected(actual, expected)
-		} else {
-			info = expected
-		}
-		explanation = matchutil.Explain(matched, "match.LessThanOrEqual", info)
-		return
-	})
+	tm := struct {
+		typemap.StringFunc[T]
+		typemap.DefaultOrder[T]
+	}{
+		StringFunc: DefaultString[T](),
+	}
+	return lessThanOrEqualImpl(tm, "match.LessThanOrEqual", other)
 }
 
 func GreaterThan[T cmp.Ordered](other T) Matcher[T] {
-	return MatcherFunc[T](func(got T) (matched bool, explanation string) {
-		matched = got > other
-		expected := fmt.Sprintf("got > %s", matchutil.DefaultFormat(other))
-		var info string
-		if !matched {
-			actual := fmt.Sprintf("got == %s", matchutil.DefaultFormat(got))
-			info = matchutil.ActualVsExpected(actual, expected)
-		} else {
-			info = expected
-		}
-		explanation = matchutil.Explain(matched, "match.GreaterThan", info)
-		return
-	})
+	tm := struct {
+		typemap.StringFunc[T]
+		typemap.DefaultOrder[T]
+	}{
+		StringFunc: DefaultString[T](),
+	}
+	return greaterThanImpl(tm, "match.GreaterThan", other)
 }
 
 func GreaterThanOrEqual[T cmp.Ordered](other T) Matcher[T] {
-	return MatcherFunc[T](func(got T) (matched bool, explanation string) {
-		matched = got >= other
-		expected := fmt.Sprintf("got >= %s", matchutil.DefaultFormat(other))
-		var info string
-		if !matched {
-			actual := fmt.Sprintf("got == %s", matchutil.DefaultFormat(got))
-			info = matchutil.ActualVsExpected(actual, expected)
-		} else {
-			info = expected
-		}
-		explanation = matchutil.Explain(matched, "match.GreaterThanOrEqual", info)
-		return
-	})
+	tm := struct {
+		typemap.StringFunc[T]
+		typemap.DefaultOrder[T]
+	}{
+		StringFunc: DefaultString[T](),
+	}
+	return greaterThanOrEqualImpl(tm, "match.GreaterThanOrEqual", other)
 }
