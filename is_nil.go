@@ -10,7 +10,7 @@ import (
 func isNilImpl[T any](tm interface {
 	typemap.IsNil[T]
 	typemap.String[T]
-	}, name string) Matcher[T] {
+}, name string) Matcher[T] {
 	return MatcherFunc[T](func(got T) (matched bool, explanation string) {
 		matched = tm.IsNil(got)
 		expected := "got == nil"
@@ -32,16 +32,22 @@ func IsNilTm[T any](tm interface {
 }
 
 func SliceIsNil[T ~[]E, E any]() Matcher[T] {
-	tm := typemap.ForSliceLike[T, E]{}
+	tm := typemap.ForSliceLike[T, E]{
+		StringFunc: DefaultString[T](),
+	}
 	return isNilImpl(tm, "match.SliceIsNil")
 }
 
 func MapIsNil[T ~map[K]V, K comparable, V any]() Matcher[T] {
-	tm := typemap.ForMapLike[T, K, V]{}
+	tm := typemap.ForMapLike[T, K, V]{
+		StringFunc: DefaultString[T](),
+	}
 	return isNilImpl(tm, "match.MapIsNil")
 }
 
 func PointerIsNil[T any]() Matcher[*T] {
-	tm := typemap.ForPointer[T]{}
+	tm := typemap.ForPointer[T]{
+		StringFunc: DefaultString[*T](),
+	}
 	return isNilImpl(tm, "match.PointerIsNil")
 }
