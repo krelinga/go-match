@@ -35,37 +35,37 @@ func IsNilTm[T any](tm interface {
 
 func SliceLikeIsNil[T ~[]E, E any]() Matcher[T] {
 	tm := typemap.ForSliceLike[T, E]{
-		StringFunc: DefaultString[T](),
+		StringFunc: DefaultString[T],
 	}
 	return isNilImpl(tm, "match.SliceLikeIsNil")
 }
 
 func SliceIsNil[E any]() Matcher[[]E] {
 	tm := typemap.ForSlice[E]{
-		StringFunc: DefaultString[[]E](),
+		StringFunc: DefaultString[[]E],
 	}
 	return isNilImpl(tm, "match.SliceIsNil")
 }
 
 func MapLikeIsNil[T ~map[K]V, K comparable, V any]() Matcher[T] {
 	tm := typemap.ForMapLike[T, K, V]{
-		StringFunc: DefaultString[T](),
+		StringFunc: DefaultString[T],
 	}
 	return isNilImpl(tm, "match.MapLikeIsNil")
 }
 
 func MapIsNil[K comparable, V any]() Matcher[map[K]V] {
 	tm := typemap.ForMap[K, V]{
-		StringFunc: DefaultString[map[K]V](),
+		StringFunc: DefaultString[map[K]V],
 	}
 	return isNilImpl(tm, "match.MapIsNil")
 }
 
 func pointerString[T any](p *T) string {
 	if p == nil {
-		return DefaultString[*T]().String(nil)
+		return DefaultString[*T](nil)
 	} else {
-		return fmt.Sprintf("non-nil pointer to %s", DefaultString[T]().String(*p))
+		return fmt.Sprintf("non-nil pointer to %s", DefaultString(*p))
 	}
 }
 

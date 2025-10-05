@@ -13,7 +13,7 @@ func TestLessThanTm(t *testing.T) {
 		typemap.StringFunc[int]
 		typemap.DefaultOrder[int]
 	}{
-		StringFunc: match.DefaultString[int](),
+		StringFunc: match.DefaultString[int],
 	}
 	tests := []struct {
 		name    string

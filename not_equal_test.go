@@ -13,7 +13,7 @@ func TestNotEqualTm(t *testing.T) {
 		typemap.StringFunc[int]
 		typemap.DefaultCompare[int]
 	}{
-		StringFunc: match.DefaultString[int](),
+		StringFunc: match.DefaultString[int],
 	}
 	tests := []struct {
 		name    string

@@ -2,7 +2,6 @@ package match
 
 import (
 	"github.com/krelinga/go-match/matchutil"
-	"github.com/krelinga/go-typemap"
 )
 
 type Matcher[T any] interface {
@@ -19,8 +18,6 @@ func Match[T any](got T, matcher Matcher[T]) (bool, string) {
 	return matcher.Match(got)
 }
 
-func DefaultString[T any]() typemap.StringFunc[T] {
-	return func(v T) string {
-		return matchutil.DefaultFormat(v)
-	}
+func DefaultString[T any](v T) string {
+	return matchutil.DefaultFormat(v)
 }

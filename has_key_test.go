@@ -13,7 +13,7 @@ func TestHasKeyTm(t *testing.T) {
 	keyTm := struct {
 		typemap.StringFunc[string]
 	}{
-		StringFunc: match.DefaultString[string](),
+		StringFunc: match.DefaultString[string],
 	}
 	tests := []struct {
 		name    string

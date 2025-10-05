@@ -10,7 +10,7 @@ import (
 func TestLengthTm(t *testing.T) {
 	goldie := newGoldie(t)
 	tm := typemap.ForSliceLike[[]int, int]{
-		StringFunc: match.DefaultString[[]int](),
+		StringFunc: match.DefaultString[[]int],
 	}
 	tests := []struct {
 		name    string
