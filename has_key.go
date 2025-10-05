@@ -11,12 +11,14 @@ func hasKeyImpl[T, K any](containerTm typemap.HasKey[T, K], keyTm typemap.String
 	return MatcherFunc[T](func(got T) (matched bool, explanation string) {
 		matched = containerTm.HasKey(got, key)
 		expected := fmt.Sprintf("has key %s", keyTm.String(key))
+		var detail string
 		if matched {
-			explanation = expected
+			detail = expected
 		} else {
 			actual := fmt.Sprintf("key %s not found", keyTm.String(key))
-			explanation = matchutil.Explain(matched, name, matchutil.ActualVsExpected(actual, expected))
+			detail = matchutil.ActualVsExpected(actual, expected)
 		}
+		explanation = matchutil.Explain(matched, name, detail)
 		return
 	})
 }
