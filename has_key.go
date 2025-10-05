@@ -7,24 +7,24 @@ import (
 	"github.com/krelinga/go-typemap"
 )
 
-func hasKeyImpl[T, K any](containerTm typemap.HasKey[T, K], keyTm typemap.String[K], name string, key K) Matcher[T] {
+func hasKeyImpl[T, K any](containerTm typemap.HasKey[T, K], keyTm typemap.String[K], matcherName, keyName string, key K) Matcher[T] {
 	return MatcherFunc[T](func(got T) (matched bool, explanation string) {
 		matched = containerTm.HasKey(got, key)
-		expected := fmt.Sprintf("has key %s", keyTm.String(key))
+		expected := fmt.Sprintf("has %s %s", keyName, keyTm.String(key))
 		var detail string
 		if matched {
 			detail = expected
 		} else {
-			actual := fmt.Sprintf("key %s not found", keyTm.String(key))
+			actual := fmt.Sprintf("%s %s not found", keyName, keyTm.String(key))
 			detail = matchutil.ActualVsExpected(actual, expected)
 		}
-		explanation = matchutil.Explain(matched, name, detail)
+		explanation = matchutil.Explain(matched, matcherName, detail)
 		return
 	})
 }
 
 func HasKeyTm[T, K any](containerTm typemap.HasKey[T, K], keyTm typemap.String[K], key K) Matcher[T] {
-	return hasKeyImpl(containerTm, keyTm, "match.HasKeyTm", key)
+	return hasKeyImpl(containerTm, keyTm, "match.HasKeyTm", "key", key)
 }
 
 func StringHasIndex[T ~string](index int) Matcher[T] {
@@ -32,7 +32,7 @@ func StringHasIndex[T ~string](index int) Matcher[T] {
 	keyTm := typemap.ForInt{
 		StringFunc: DefaultString[int](),
 	}
-	return hasKeyImpl(contTm, keyTm, "match.StringHasIndex", index)
+	return hasKeyImpl(contTm, keyTm, "match.StringHasIndex", "index", index)
 }
 
 func SliceHasIndex[T ~[]E, E any](index int) Matcher[T] {
@@ -40,7 +40,7 @@ func SliceHasIndex[T ~[]E, E any](index int) Matcher[T] {
 	keyTm := typemap.ForInt{
 		StringFunc: DefaultString[int](),
 	}
-	return hasKeyImpl(contTm, keyTm, "match.SliceHasIndex", index)
+	return hasKeyImpl(contTm, keyTm, "match.SliceHasIndex", "index", index)
 }
 
 func MapHasKey[T ~map[K]V, K comparable, V any](key K) Matcher[T] {
@@ -50,5 +50,5 @@ func MapHasKey[T ~map[K]V, K comparable, V any](key K) Matcher[T] {
 	}{
 		StringFunc: DefaultString[K](),
 	}
-	return hasKeyImpl(contTm, keyTm, "match.MapHasKey", key)
+	return hasKeyImpl(contTm, keyTm, "match.MapHasKey", "key", key)
 }
