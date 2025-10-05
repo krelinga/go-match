@@ -44,7 +44,3 @@ func ActualVsExpected(actual, expected string) string {
 	fmt.Fprintf(sb, "Actual:   %s", actual)
 	return sb.String()
 }
-
-func DefaultFormat(t any) string {
-	return fmt.Sprintf("%#v", t)
-}

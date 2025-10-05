@@ -1,7 +1,7 @@
 package match
 
 import (
-	"github.com/krelinga/go-match/matchfmt"
+	"fmt"
 )
 
 type Matcher[T any] interface {
@@ -19,5 +19,5 @@ func Match[T any](got T, matcher Matcher[T]) (bool, string) {
 }
 
 func DefaultString[T any](v T) string {
-	return matchfmt.DefaultFormat(v)
+	return fmt.Sprintf("%#v", v)
 }
