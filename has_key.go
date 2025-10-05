@@ -43,8 +43,17 @@ func StringHasIndex(index int) Matcher[string] {
 	return hasKeyImpl(contTm, keyTm, "match.StringHasIndex", "index", index)
 }
 
-func SliceHasIndex[T ~[]E, E any](index int) Matcher[T] {
+func SliceLikeHasIndex[T ~[]E, E any](index int) Matcher[T] {
 	contTm := typemap.ForSliceLike[T, E]{}
+	keyTm := typemap.ForInt{
+		StringFunc: DefaultString[int](),
+	}
+	return hasKeyImpl(contTm, keyTm, "match.SliceLikeHasIndex", "index", index)
+}
+
+func SliceHasIndex[E any](index int) Matcher[[]E] {
+	contTm := typemap.ForSlice[E]{
+	}
 	keyTm := typemap.ForInt{
 		StringFunc: DefaultString[int](),
 	}

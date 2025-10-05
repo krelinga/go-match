@@ -109,6 +109,38 @@ func TestStringHasIndex(t *testing.T) {
 	}
 }
 
+func TestSliceLikeHasIndex(t *testing.T) {
+	goldie := newGoldie(t)
+	tests := []struct {
+		name    string
+		matcher match.Matcher[[]int]
+		value   []int
+		want    bool
+	}{
+		{
+			name:    "index_exists",
+			matcher: match.SliceLikeHasIndex[[]int](1),
+			value:   []int{10, 20, 30},
+			want:    true,
+		},
+		{
+			name:    "index_out_of_bounds",
+			matcher: match.SliceLikeHasIndex[[]int](5),
+			value:   []int{10, 20, 30},
+			want:    false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, gotExplanation := tt.matcher.Match(tt.value)
+			if got != tt.want {
+				t.Errorf("got %v, want %v", got, tt.want)
+			}
+			goldie.Assert(t, tt.name, []byte(gotExplanation))
+		})
+	}
+}
+
 func TestSliceHasIndex(t *testing.T) {
 	goldie := newGoldie(t)
 	tests := []struct {
@@ -119,13 +151,13 @@ func TestSliceHasIndex(t *testing.T) {
 	}{
 		{
 			name:    "index_exists",
-			matcher: match.SliceHasIndex[[]int](1),
+			matcher: match.SliceHasIndex[int](1),
 			value:   []int{10, 20, 30},
 			want:    true,
 		},
 		{
 			name:    "index_out_of_bounds",
-			matcher: match.SliceHasIndex[[]int](5),
+			matcher: match.SliceHasIndex[int](5),
 			value:   []int{10, 20, 30},
 			want:    false,
 		},
