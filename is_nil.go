@@ -47,9 +47,16 @@ func SliceIsNil[E any]() Matcher[[]E] {
 	return isNilImpl(tm, "match.SliceIsNil")
 }
 
-func MapIsNil[T ~map[K]V, K comparable, V any]() Matcher[T] {
+func MapLikeIsNil[T ~map[K]V, K comparable, V any]() Matcher[T] {
 	tm := typemap.ForMapLike[T, K, V]{
 		StringFunc: DefaultString[T](),
+	}
+	return isNilImpl(tm, "match.MapLikeIsNil")
+}
+
+func MapIsNil[K comparable, V any]() Matcher[map[K]V] {
+	tm := typemap.ForMap[K, V]{
+		StringFunc: DefaultString[map[K]V](),
 	}
 	return isNilImpl(tm, "match.MapIsNil")
 }

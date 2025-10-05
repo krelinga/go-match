@@ -118,6 +118,44 @@ func TestSliceIsNil(t *testing.T) {
 	}
 }
 
+func TestMapLikeIsNil(t *testing.T) {
+	goldie := newGoldie(t)
+	tests := []struct {
+		name    string
+		matcher match.Matcher[map[string]int]
+		value   map[string]int
+		want    bool
+	}{
+		{
+			name:    "nil_map",
+			matcher: match.MapLikeIsNil[map[string]int](),
+			value:   nil,
+			want:    true,
+		},
+		{
+			name:    "non_nil_map",
+			matcher: match.MapLikeIsNil[map[string]int](),
+			value:   map[string]int{"foo": 1},
+			want:    false,
+		},
+		{
+			name:    "empty_map",
+			matcher: match.MapLikeIsNil[map[string]int](),
+			value:   map[string]int{},
+			want:    false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, gotExplanation := tt.matcher.Match(tt.value)
+			if got != tt.want {
+				t.Errorf("got %v, want %v", got, tt.want)
+			}
+			goldie.Assert(t, tt.name, []byte(gotExplanation))
+		})
+	}
+}
+
 func TestMapIsNil(t *testing.T) {
 	goldie := newGoldie(t)
 	tests := []struct {
@@ -128,19 +166,19 @@ func TestMapIsNil(t *testing.T) {
 	}{
 		{
 			name:    "nil_map",
-			matcher: match.MapIsNil[map[string]int](),
+			matcher: match.MapIsNil[string, int](),
 			value:   nil,
 			want:    true,
 		},
 		{
 			name:    "non_nil_map",
-			matcher: match.MapIsNil[map[string]int](),
+			matcher: match.MapIsNil[string, int](),
 			value:   map[string]int{"foo": 1},
 			want:    false,
 		},
 		{
 			name:    "empty_map",
-			matcher: match.MapIsNil[map[string]int](),
+			matcher: match.MapIsNil[string, int](),
 			value:   map[string]int{},
 			want:    false,
 		},
