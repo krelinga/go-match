@@ -170,6 +170,38 @@ func TestSliceLength(t *testing.T) {
 	}
 }
 
+func TestMapLikeLength(t *testing.T) {
+	goldie := newGoldie(t)
+	tests := []struct {
+		name    string
+		matcher match.Matcher[map[string]int]
+		value   map[string]int
+		want    bool
+	}{
+		{
+			name:    "length_equal",
+			matcher: match.MapLikeLength[map[string]int](match.Equal(2)),
+			value:   map[string]int{"foo": 1, "bar": 2},
+			want:    true,
+		},
+		{
+			name:    "length_not_equal",
+			matcher: match.MapLikeLength[map[string]int](match.Equal(5)),
+			value:   map[string]int{"foo": 1, "bar": 2},
+			want:    false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, gotExplanation := tt.matcher.Match(tt.value)
+			if got != tt.want {
+				t.Errorf("got %v, want %v", got, tt.want)
+			}
+			goldie.Assert(t, tt.name, []byte(gotExplanation))
+		})
+	}
+}
+
 func TestMapLength(t *testing.T) {
 	goldie := newGoldie(t)
 	tests := []struct {
@@ -180,13 +212,13 @@ func TestMapLength(t *testing.T) {
 	}{
 		{
 			name:    "length_equal",
-			matcher: match.MapLength[map[string]int](match.Equal(2)),
+			matcher: match.MapLength[string, int](match.Equal(2)),
 			value:   map[string]int{"foo": 1, "bar": 2},
 			want:    true,
 		},
 		{
 			name:    "length_not_equal",
-			matcher: match.MapLength[map[string]int](match.Equal(5)),
+			matcher: match.MapLength[string, int](match.Equal(5)),
 			value:   map[string]int{"foo": 1, "bar": 2},
 			want:    false,
 		},

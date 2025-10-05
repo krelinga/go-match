@@ -46,9 +46,16 @@ func SliceLength[E any](matcher Matcher[int]) Matcher[[]E] {
 	return lengthImpl(tm, "match.SliceLength", matcher)
 }
 
-func MapLength[T ~map[K]V, K comparable, V any](matcher Matcher[int]) Matcher[T] {
+func MapLikeLength[T ~map[K]V, K comparable, V any](matcher Matcher[int]) Matcher[T] {
 	tm := typemap.ForMapLike[T, K, V]{
 		StringFunc: DefaultString[T](),
+	}
+	return lengthImpl(tm, "match.MapLikeLength", matcher)
+}
+
+func MapLength[K comparable, V any](matcher Matcher[int]) Matcher[map[K]V] {
+	tm := typemap.ForMap[K, V]{
+		StringFunc: DefaultString[map[K]V](),
 	}
 	return lengthImpl(tm, "match.MapLength", matcher)
 }
