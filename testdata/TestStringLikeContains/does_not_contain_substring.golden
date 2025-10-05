@@ -1,0 +1,3 @@
+❌ match.StringLikeContains:
+   Expected: string contains "foo"
+   Actual:   string "hello world" does not contain "foo"

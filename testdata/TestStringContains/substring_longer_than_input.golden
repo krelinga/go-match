@@ -1,0 +1,3 @@
+❌ match.StringContains:
+   Expected: string contains "hello"
+   Actual:   string "hi" does not contain "hello"
