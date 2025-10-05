@@ -198,11 +198,10 @@ func TestPointerIsNil(t *testing.T) {
 	goldie := newGoldie(t)
 	nonNilValue := 42
 	tests := []struct {
-		name           string
-		matcher        match.Matcher[*int]
-		value          *int
-		want           bool
-		skipGoldenFile bool
+		name    string
+		matcher match.Matcher[*int]
+		value   *int
+		want    bool
 	}{
 		{
 			name:    "nil_pointer",
@@ -211,11 +210,10 @@ func TestPointerIsNil(t *testing.T) {
 			want:    true,
 		},
 		{
-			name:           "non_nil_pointer",
-			matcher:        match.PointerIsNil[int](),
-			value:          &nonNilValue,
-			want:           false,
-			skipGoldenFile: true,
+			name:    "non_nil_pointer",
+			matcher: match.PointerIsNil[int](),
+			value:   &nonNilValue,
+			want:    false,
 		},
 	}
 	for _, tt := range tests {
@@ -224,18 +222,7 @@ func TestPointerIsNil(t *testing.T) {
 			if got != tt.want {
 				t.Errorf("got %v, want %v", got, tt.want)
 			}
-			if tt.skipGoldenFile {
-				// Pointer addresses are non-deterministic, so we just verify the explanation contains expected parts
-				if got {
-					t.Errorf("expected matcher to not match, but it did")
-				}
-				// Just verify it contains the key parts
-				if len(gotExplanation) == 0 {
-					t.Errorf("expected non-empty explanation")
-				}
-			} else {
-				goldie.Assert(t, tt.name, []byte(gotExplanation))
-			}
+			goldie.Assert(t, tt.name, []byte(gotExplanation))
 		})
 	}
 }

@@ -61,9 +61,17 @@ func MapIsNil[K comparable, V any]() Matcher[map[K]V] {
 	return isNilImpl(tm, "match.MapIsNil")
 }
 
+func pointerString[T any](p *T) string {
+	if p == nil {
+		return DefaultString[*T]().String(nil)
+	} else {
+		return fmt.Sprintf("non-nil pointer to %s", DefaultString[T]().String(*p))
+	}
+}
+
 func PointerIsNil[T any]() Matcher[*T] {
 	tm := typemap.ForPointer[T]{
-		StringFunc: DefaultString[*T](),
+		StringFunc: pointerString[T],
 	}
 	return isNilImpl(tm, "match.PointerIsNil")
 }
