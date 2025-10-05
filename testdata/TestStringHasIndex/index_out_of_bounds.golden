@@ -1,0 +1,3 @@
+❌ match.StringHasIndex:
+   Expected: has index 10
+   Actual:   index 10 not found

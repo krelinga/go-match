@@ -1,0 +1,3 @@
+❌ match.SliceHasIndex:
+   Expected: has index 5
+   Actual:   index 5 not found

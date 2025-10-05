@@ -7,46 +7,74 @@ import (
 	"github.com/krelinga/go-typemap"
 )
 
-func hasKeyImpl[T, K any](containerTm typemap.HasKey[T, K], keyTm typemap.String[K], name string, key K) Matcher[T] {
+func hasKeyImpl[T, K any](containerTm typemap.HasKey[T, K], keyTm typemap.String[K], matcherName, keyName string, key K) Matcher[T] {
 	return MatcherFunc[T](func(got T) (matched bool, explanation string) {
 		matched = containerTm.HasKey(got, key)
-		expected := fmt.Sprintf("has key %s", keyTm.String(key))
+		expected := fmt.Sprintf("has %s %s", keyName, keyTm.String(key))
+		var detail string
 		if matched {
-			explanation = expected
+			detail = expected
 		} else {
-			actual := fmt.Sprintf("key %s not found", keyTm.String(key))
-			explanation = matchutil.Explain(matched, name, matchutil.ActualVsExpected(actual, expected))
+			actual := fmt.Sprintf("%s %s not found", keyName, keyTm.String(key))
+			detail = matchutil.ActualVsExpected(actual, expected)
 		}
+		explanation = matchutil.Explain(matched, matcherName, detail)
 		return
 	})
 }
 
 func HasKeyTm[T, K any](containerTm typemap.HasKey[T, K], keyTm typemap.String[K], key K) Matcher[T] {
-	return hasKeyImpl(containerTm, keyTm, "match.HasKeyTm", key)
+	return hasKeyImpl(containerTm, keyTm, "match.HasKeyTm", "key", key)
 }
 
-func StringHasIndex[T ~string](index int) Matcher[T] {
+func StringLikeHasIndex[T ~string](index int) Matcher[T] {
 	contTm := typemap.ForStringLike[T]{}
 	keyTm := typemap.ForInt{
 		StringFunc: DefaultString[int](),
 	}
-	return hasKeyImpl(contTm, keyTm, "match.StringHasIndex", index)
+	return hasKeyImpl(contTm, keyTm, "match.StringLikeHasIndex", "index", index)
 }
 
-func SliceHasIndex[T ~[]E, E any](index int) Matcher[T] {
+func StringHasIndex(index int) Matcher[string] {
+	contTm := typemap.ForString{}
+	keyTm := typemap.ForInt{
+		StringFunc: DefaultString[int](),
+	}
+	return hasKeyImpl(contTm, keyTm, "match.StringHasIndex", "index", index)
+}
+
+func SliceLikeHasIndex[T ~[]E, E any](index int) Matcher[T] {
 	contTm := typemap.ForSliceLike[T, E]{}
 	keyTm := typemap.ForInt{
 		StringFunc: DefaultString[int](),
 	}
-	return hasKeyImpl(contTm, keyTm, "match.SliceHasIndex", index)
+	return hasKeyImpl(contTm, keyTm, "match.SliceLikeHasIndex", "index", index)
 }
 
-func MapHasKey[T ~map[K]V, K comparable, V any](key K) Matcher[T] {
+func SliceHasIndex[E any](index int) Matcher[[]E] {
+	contTm := typemap.ForSlice[E]{}
+	keyTm := typemap.ForInt{
+		StringFunc: DefaultString[int](),
+	}
+	return hasKeyImpl(contTm, keyTm, "match.SliceHasIndex", "index", index)
+}
+
+func MapLikeHasKey[T ~map[K]V, K comparable, V any](key K) Matcher[T] {
 	contTm := typemap.ForMapLike[T, K, V]{}
 	keyTm := struct {
 		typemap.StringFunc[K]
 	}{
 		StringFunc: DefaultString[K](),
 	}
-	return hasKeyImpl(contTm, keyTm, "match.MapHasKey", key)
+	return hasKeyImpl(contTm, keyTm, "match.MapLikeHasKey", "key", key)
+}
+
+func MapHasKey[K comparable, V any](key K) Matcher[map[K]V] {
+	contTm := typemap.ForMap[K, V]{}
+	keyTm := struct {
+		typemap.StringFunc[K]
+	}{
+		StringFunc: DefaultString[K](),
+	}
+	return hasKeyImpl(contTm, keyTm, "match.MapHasKey", "key", key)
 }

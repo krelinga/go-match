@@ -1,0 +1,3 @@
+✅ match.SliceLikeLength:
+   ✅ match.Equal:
+      got == 3
