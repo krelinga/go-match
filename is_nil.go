@@ -33,9 +33,16 @@ func IsNilTm[T any](tm interface {
 	return isNilImpl(tm, "match.IsNilTm")
 }
 
-func SliceIsNil[T ~[]E, E any]() Matcher[T] {
+func SliceLikeIsNil[T ~[]E, E any]() Matcher[T] {
 	tm := typemap.ForSliceLike[T, E]{
 		StringFunc: DefaultString[T](),
+	}
+	return isNilImpl(tm, "match.SliceLikeIsNil")
+}
+
+func SliceIsNil[E any]() Matcher[[]E] {
+	tm := typemap.ForSlice[E]{
+		StringFunc: DefaultString[[]E](),
 	}
 	return isNilImpl(tm, "match.SliceIsNil")
 }

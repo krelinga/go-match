@@ -42,6 +42,44 @@ func TestIsNilTm(t *testing.T) {
 	}
 }
 
+func TestSliceLikeIsNil(t *testing.T) {
+	goldie := newGoldie(t)
+	tests := []struct {
+		name    string
+		matcher match.Matcher[[]int]
+		value   []int
+		want    bool
+	}{
+		{
+			name:    "nil_slice",
+			matcher: match.SliceLikeIsNil[[]int](),
+			value:   nil,
+			want:    true,
+		},
+		{
+			name:    "non_nil_slice",
+			matcher: match.SliceLikeIsNil[[]int](),
+			value:   []int{1, 2, 3},
+			want:    false,
+		},
+		{
+			name:    "empty_slice",
+			matcher: match.SliceLikeIsNil[[]int](),
+			value:   []int{},
+			want:    false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, gotExplanation := tt.matcher.Match(tt.value)
+			if got != tt.want {
+				t.Errorf("got %v, want %v", got, tt.want)
+			}
+			goldie.Assert(t, tt.name, []byte(gotExplanation))
+		})
+	}
+}
+
 func TestSliceIsNil(t *testing.T) {
 	goldie := newGoldie(t)
 	tests := []struct {
@@ -52,19 +90,19 @@ func TestSliceIsNil(t *testing.T) {
 	}{
 		{
 			name:    "nil_slice",
-			matcher: match.SliceIsNil[[]int](),
+			matcher: match.SliceIsNil[int](),
 			value:   nil,
 			want:    true,
 		},
 		{
 			name:    "non_nil_slice",
-			matcher: match.SliceIsNil[[]int](),
+			matcher: match.SliceIsNil[int](),
 			value:   []int{1, 2, 3},
 			want:    false,
 		},
 		{
 			name:    "empty_slice",
-			matcher: match.SliceIsNil[[]int](),
+			matcher: match.SliceIsNil[int](),
 			value:   []int{},
 			want:    false,
 		},
