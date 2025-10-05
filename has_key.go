@@ -27,8 +27,16 @@ func HasKeyTm[T, K any](containerTm typemap.HasKey[T, K], keyTm typemap.String[K
 	return hasKeyImpl(containerTm, keyTm, "match.HasKeyTm", "key", key)
 }
 
-func StringHasIndex[T ~string](index int) Matcher[T] {
+func StringLikeHasIndex[T ~string](index int) Matcher[T] {
 	contTm := typemap.ForStringLike[T]{}
+	keyTm := typemap.ForInt{
+		StringFunc: DefaultString[int](),
+	}
+	return hasKeyImpl(contTm, keyTm, "match.StringLikeHasIndex", "index", index)
+}
+
+func StringHasIndex(index int) Matcher[string] {
+	contTm := typemap.ForString{}
 	keyTm := typemap.ForInt{
 		StringFunc: DefaultString[int](),
 	}

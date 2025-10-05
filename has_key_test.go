@@ -45,6 +45,38 @@ func TestHasKeyTm(t *testing.T) {
 	}
 }
 
+func TestStringLikeHasIndex(t *testing.T) {
+	goldie := newGoldie(t)
+	tests := []struct {
+		name    string
+		matcher match.Matcher[string]
+		value   string
+		want    bool
+	}{
+		{
+			name:    "index_exists",
+			matcher: match.StringLikeHasIndex[string](2),
+			value:   "hello",
+			want:    true,
+		},
+		{
+			name:    "index_out_of_bounds",
+			matcher: match.StringLikeHasIndex[string](10),
+			value:   "hello",
+			want:    false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, gotExplanation := tt.matcher.Match(tt.value)
+			if got != tt.want {
+				t.Errorf("got %v, want %v", got, tt.want)
+			}
+			goldie.Assert(t, tt.name, []byte(gotExplanation))
+		})
+	}
+}
+
 func TestStringHasIndex(t *testing.T) {
 	goldie := newGoldie(t)
 	tests := []struct {
@@ -55,13 +87,13 @@ func TestStringHasIndex(t *testing.T) {
 	}{
 		{
 			name:    "index_exists",
-			matcher: match.StringHasIndex[string](2),
+			matcher: match.StringHasIndex(2),
 			value:   "hello",
 			want:    true,
 		},
 		{
 			name:    "index_out_of_bounds",
-			matcher: match.StringHasIndex[string](10),
+			matcher: match.StringHasIndex(10),
 			value:   "hello",
 			want:    false,
 		},
