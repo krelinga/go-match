@@ -1,3 +1,19 @@
+// Package matchfmt provides formatting utilities for matcher implementations.
+//
+// This package is designed for use by packages that implement custom matchers
+// and need to format match results, explanations, and error messages in a
+// consistent way. It provides functions for creating visual indicators,
+// indenting text, and formatting comparison outputs.
+//
+// End users who are only calling existing matchers should not need to use
+// this package directly, as the formatting is handled internally by the
+// matcher implementations.
+//
+// The package includes utilities for:
+//   - Visual indicators (emojis) for match results
+//   - Text indentation for hierarchical output
+//   - Formatted explanations with details
+//   - Actual vs expected value comparisons
 package matchfmt
 
 import (
