@@ -18,9 +18,16 @@ func LengthTm[T any](tm typemap.Length[T], matcher Matcher[int]) Matcher[T] {
 	return lengthImpl(tm, "match.LengthTm", matcher)
 }
 
-func StringLength[T ~string](matcher Matcher[int]) Matcher[T] {
+func StringLikeLength[T ~string](matcher Matcher[int]) Matcher[T] {
 	tm := typemap.ForStringLike[T]{
 		StringFunc: DefaultString[T](),
+	}
+	return lengthImpl(tm, "match.StringLikeLength", matcher)
+}
+
+func StringLength(matcher Matcher[int]) Matcher[string] {
+	tm := typemap.ForString{
+		StringFunc: DefaultString[string](),
 	}
 	return lengthImpl(tm, "match.StringLength", matcher)
 }
