@@ -1,1 +1,2 @@
-got == nil
+✅ match.SliceIsNil:
+   got == nil

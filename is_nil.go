@@ -14,12 +14,14 @@ func isNilImpl[T any](tm interface {
 	return MatcherFunc[T](func(got T) (matched bool, explanation string) {
 		matched = tm.IsNil(got)
 		expected := "got == nil"
+		var detail string
 		if matched {
-			explanation = expected
+			detail = expected
 		} else {
 			actual := fmt.Sprintf("got = %s", tm.String(got))
-			explanation = matchutil.Explain(matched, name, matchutil.ActualVsExpected(actual, expected))
+			detail = matchutil.ActualVsExpected(actual, expected)
 		}
+		explanation = matchutil.Explain(matched, name, detail)
 		return
 	})
 }
