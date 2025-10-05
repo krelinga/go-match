@@ -9,7 +9,9 @@ import (
 
 func TestLengthTm(t *testing.T) {
 	goldie := newGoldie(t)
-	tm := typemap.ForSliceLike[[]int, int]{}
+	tm := typemap.ForSliceLike[[]int, int]{
+		StringFunc: match.DefaultString[[]int](),
+	}
 	tests := []struct {
 		name    string
 		matcher match.Matcher[[]int]
