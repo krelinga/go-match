@@ -1,0 +1,3 @@
+❌ match.MapLikeHasKey:
+   Expected: has key "baz"
+   Actual:   key "baz" not found

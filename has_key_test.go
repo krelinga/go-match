@@ -173,6 +173,38 @@ func TestSliceHasIndex(t *testing.T) {
 	}
 }
 
+func TestMapLikeHasKey(t *testing.T) {
+	goldie := newGoldie(t)
+	tests := []struct {
+		name    string
+		matcher match.Matcher[map[string]int]
+		value   map[string]int
+		want    bool
+	}{
+		{
+			name:    "key_exists",
+			matcher: match.MapLikeHasKey[map[string]int]("foo"),
+			value:   map[string]int{"foo": 1, "bar": 2},
+			want:    true,
+		},
+		{
+			name:    "key_not_found",
+			matcher: match.MapLikeHasKey[map[string]int]("baz"),
+			value:   map[string]int{"foo": 1, "bar": 2},
+			want:    false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, gotExplanation := tt.matcher.Match(tt.value)
+			if got != tt.want {
+				t.Errorf("got %v, want %v", got, tt.want)
+			}
+			goldie.Assert(t, tt.name, []byte(gotExplanation))
+		})
+	}
+}
+
 func TestMapHasKey(t *testing.T) {
 	goldie := newGoldie(t)
 	tests := []struct {
@@ -183,13 +215,13 @@ func TestMapHasKey(t *testing.T) {
 	}{
 		{
 			name:    "key_exists",
-			matcher: match.MapHasKey[map[string]int]("foo"),
+			matcher: match.MapHasKey[string, int]("foo"),
 			value:   map[string]int{"foo": 1, "bar": 2},
 			want:    true,
 		},
 		{
 			name:    "key_not_found",
-			matcher: match.MapHasKey[map[string]int]("baz"),
+			matcher: match.MapHasKey[string, int]("baz"),
 			value:   map[string]int{"foo": 1, "bar": 2},
 			want:    false,
 		},

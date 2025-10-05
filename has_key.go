@@ -52,16 +52,25 @@ func SliceLikeHasIndex[T ~[]E, E any](index int) Matcher[T] {
 }
 
 func SliceHasIndex[E any](index int) Matcher[[]E] {
-	contTm := typemap.ForSlice[E]{
-	}
+	contTm := typemap.ForSlice[E]{}
 	keyTm := typemap.ForInt{
 		StringFunc: DefaultString[int](),
 	}
 	return hasKeyImpl(contTm, keyTm, "match.SliceHasIndex", "index", index)
 }
 
-func MapHasKey[T ~map[K]V, K comparable, V any](key K) Matcher[T] {
+func MapLikeHasKey[T ~map[K]V, K comparable, V any](key K) Matcher[T] {
 	contTm := typemap.ForMapLike[T, K, V]{}
+	keyTm := struct {
+		typemap.StringFunc[K]
+	}{
+		StringFunc: DefaultString[K](),
+	}
+	return hasKeyImpl(contTm, keyTm, "match.MapLikeHasKey", "key", key)
+}
+
+func MapHasKey[K comparable, V any](key K) Matcher[map[K]V] {
+	contTm := typemap.ForMap[K, V]{}
 	keyTm := struct {
 		typemap.StringFunc[K]
 	}{
