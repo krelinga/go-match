@@ -3,7 +3,7 @@ package match
 import (
 	"fmt"
 
-	"github.com/krelinga/go-match/matchutil"
+	"github.com/krelinga/go-match/matchfmt"
 	"github.com/krelinga/go-typemap"
 )
 
@@ -17,11 +17,11 @@ func greaterThanOrEqualImpl[T any](tm interface {
 		var info string
 		if !matched {
 			actual := fmt.Sprintf("got == %s", tm.String(got))
-			info = matchutil.ActualVsExpected(actual, expected)
+			info = matchfmt.ActualVsExpected(actual, expected)
 		} else {
 			info = expected
 		}
-		explanation = matchutil.Explain(matched, name, info)
+		explanation = matchfmt.Explain(matched, name, info)
 		return
 	})
 }

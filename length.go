@@ -1,7 +1,7 @@
 package match
 
 import (
-	"github.com/krelinga/go-match/matchutil"
+	"github.com/krelinga/go-match/matchfmt"
 	"github.com/krelinga/go-typemap"
 )
 
@@ -9,7 +9,7 @@ func lengthImpl[T any](tm typemap.Length[T], name string, matcher Matcher[int]) 
 	return MatcherFunc[T](func(got T) (matched bool, explanation string) {
 		length := tm.Length(got)
 		matched, e := matcher.Match(length)
-		explanation = matchutil.Explain(matched, name, e)
+		explanation = matchfmt.Explain(matched, name, e)
 		return
 	})
 }

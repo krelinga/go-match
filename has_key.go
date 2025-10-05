@@ -3,7 +3,7 @@ package match
 import (
 	"fmt"
 
-	"github.com/krelinga/go-match/matchutil"
+	"github.com/krelinga/go-match/matchfmt"
 	"github.com/krelinga/go-typemap"
 )
 
@@ -16,9 +16,9 @@ func hasKeyImpl[T, K any](containerTm typemap.HasKey[T, K], keyTm typemap.String
 			detail = expected
 		} else {
 			actual := fmt.Sprintf("%s %s not found", keyName, keyTm.String(key))
-			detail = matchutil.ActualVsExpected(actual, expected)
+			detail = matchfmt.ActualVsExpected(actual, expected)
 		}
-		explanation = matchutil.Explain(matched, matcherName, detail)
+		explanation = matchfmt.Explain(matched, matcherName, detail)
 		return
 	})
 }

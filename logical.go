@@ -3,7 +3,7 @@ package match
 import (
 	"fmt"
 
-	"github.com/krelinga/go-match/matchutil"
+	"github.com/krelinga/go-match/matchfmt"
 )
 
 func AllOf[T any](matchers ...Matcher[T]) Matcher[T] {
@@ -16,10 +16,10 @@ func AllOf[T any](matchers ...Matcher[T]) Matcher[T] {
 				matched = false
 			}
 			indexDetail := fmt.Sprintf("matcher %d:", i)
-			matcherDetail := matchutil.Indent(e)
+			matcherDetail := matchfmt.Indent(e)
 			details = append(details, indexDetail, matcherDetail)
 		}
-		explanation = matchutil.Explain(matched, "match.AllOf", details...)
+		explanation = matchfmt.Explain(matched, "match.AllOf", details...)
 		return
 	})
 }
@@ -34,10 +34,10 @@ func AnyOf[T any](matchers ...Matcher[T]) Matcher[T] {
 				matched = true
 			}
 			indexDetail := fmt.Sprintf("matcher %d:", i)
-			matcherDetail := matchutil.Indent(e)
+			matcherDetail := matchfmt.Indent(e)
 			details = append(details, indexDetail, matcherDetail)
 		}
-		explanation = matchutil.Explain(matched, "match.AnyOf", details...)
+		explanation = matchfmt.Explain(matched, "match.AnyOf", details...)
 		return
 	})
 }
@@ -46,7 +46,7 @@ func Not[T any](matcher Matcher[T]) Matcher[T] {
 	return MatcherFunc[T](func(got T) (matched bool, explanation string) {
 		m, e := matcher.Match(got)
 		matched = !m
-		explanation = matchutil.Explain(matched, "match.Not", "negated matcher:", matchutil.Indent(e))
+		explanation = matchfmt.Explain(matched, "match.Not", "negated matcher:", matchfmt.Indent(e))
 		return
 	})
 }
@@ -54,7 +54,7 @@ func Not[T any](matcher Matcher[T]) Matcher[T] {
 func Alway[T any]() Matcher[T] {
 	return MatcherFunc[T](func(got T) (matched bool, explanation string) {
 		matched = true
-		explanation = matchutil.Explain(matched, "match.Alway", "always matches")
+		explanation = matchfmt.Explain(matched, "match.Alway", "always matches")
 		return
 	})
 }
@@ -62,7 +62,7 @@ func Alway[T any]() Matcher[T] {
 func Never[T any]() Matcher[T] {
 	return MatcherFunc[T](func(got T) (matched bool, explanation string) {
 		matched = false
-		explanation = matchutil.Explain(matched, "match.Never", "never matches")
+		explanation = matchfmt.Explain(matched, "match.Never", "never matches")
 		return
 	})
 }

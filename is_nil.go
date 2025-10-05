@@ -3,7 +3,7 @@ package match
 import (
 	"fmt"
 
-	"github.com/krelinga/go-match/matchutil"
+	"github.com/krelinga/go-match/matchfmt"
 	"github.com/krelinga/go-typemap"
 )
 
@@ -19,9 +19,9 @@ func isNilImpl[T any](tm interface {
 			detail = expected
 		} else {
 			actual := fmt.Sprintf("got = %s", tm.String(got))
-			detail = matchutil.ActualVsExpected(actual, expected)
+			detail = matchfmt.ActualVsExpected(actual, expected)
 		}
-		explanation = matchutil.Explain(matched, name, detail)
+		explanation = matchfmt.Explain(matched, name, detail)
 		return
 	})
 }
