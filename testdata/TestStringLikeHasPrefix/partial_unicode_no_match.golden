@@ -1,0 +1,3 @@
+❌ match.StringLikeHasPrefix:
+   Expected: string starts with "世界"
+   Actual:   string "こんにちは世界" does not start with "世界"

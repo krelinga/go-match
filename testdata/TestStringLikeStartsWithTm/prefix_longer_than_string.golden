@@ -1,3 +1,0 @@
-❌ match.StringLikeStartsWithTm:
-   Expected: string starts with "hello"
-   Actual:   string hi does not start with "hello"

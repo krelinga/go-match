@@ -1,3 +1,0 @@
-❌ match.StringStartsWith:
-   Expected: string starts with "x"
-   Actual:   string "test" does not start with "x"

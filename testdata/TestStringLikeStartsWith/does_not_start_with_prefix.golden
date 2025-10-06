@@ -1,3 +1,0 @@
-❌ match.StringLikeStartsWith:
-   Expected: string starts with "world"
-   Actual:   string "hello world" does not start with "world"
