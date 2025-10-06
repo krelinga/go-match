@@ -11,7 +11,7 @@ go build -o matchgen ./matchgen/
 ## Usage
 
 ```bash
-./matchgen -out <output_file.go> -match_type <StructName> -out_type <MatcherName>
+./matchgen -out <output_file.go> -match_type <StructName> -out_type <MatcherName> [-out_package <PackageName>]
 ```
 
 ### Flags
@@ -19,6 +19,7 @@ go build -o matchgen ./matchgen/
 - `-out`: The name of the .go file to generate
 - `-match_type`: The name of the Go type to match against  
 - `-out_type`: The name of the Go matcher type to generate
+- `-out_package`: (Optional) Package name for the generated matcher. If not specified, uses the same package as the match_type
 
 ## Example
 
@@ -39,6 +40,12 @@ Run the generator:
 
 ```bash
 ./matchgen -out user_matcher.go -match_type User -out_type UserMatcher
+```
+
+Or to generate in a different package:
+
+```bash
+./matchgen -out user_matcher.go -match_type User -out_type UserMatcher -out_package matchers
 ```
 
 This will generate:
@@ -130,6 +137,7 @@ func TestUser(t *testing.T) {
 - **Logical AND operation**: All non-nil matchers must pass for overall success
 - **Rich explanations**: Uses matchfmt.Explain() for detailed match results
 - **Import detection**: Automatically includes necessary imports (e.g., "time" package)
+- **Cross-package support**: Can generate matchers in different packages with proper import handling
 
 ## Supported Field Types
 

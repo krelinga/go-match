@@ -19,16 +19,18 @@ type StructField struct {
 }
 
 type Generator struct {
-	matchType string
-	outType   string
-	outFile   string
+	matchType  string
+	outType    string
+	outFile    string
+	outPackage string
 }
 
 func main() {
 	var (
-		outFile   = flag.String("out", "", "Output .go file to generate")
-		matchType = flag.String("match_type", "", "Name of the Go type to match against")
-		outType   = flag.String("out_type", "", "Name of the Go matcher type to generate")
+		outFile    = flag.String("out", "", "Output .go file to generate")
+		matchType  = flag.String("match_type", "", "Name of the Go type to match against")
+		outType    = flag.String("out_type", "", "Name of the Go matcher type to generate")
+		outPackage = flag.String("out_package", "", "Package name for the generated matcher (defaults to match_type's package)")
 	)
 	flag.Parse()
 
@@ -37,9 +39,10 @@ func main() {
 	}
 
 	gen := &Generator{
-		matchType: *matchType,
-		outType:   *outType,
-		outFile:   *outFile,
+		matchType:  *matchType,
+		outType:    *outType,
+		outFile:    *outFile,
+		outPackage: *outPackage,
 	}
 
 	if err := gen.generate(); err != nil {
@@ -234,16 +237,28 @@ func (g *Generator) formatFuncSignature(funcType *ast.FuncType, fset *token.File
 func (g *Generator) generateMatcherCode(fields []StructField, packageName string) (string, error) {
 	var builder strings.Builder
 
+	// Determine which package to use
+	targetPackage := packageName
+	if g.outPackage != "" {
+		targetPackage = g.outPackage
+	}
+
 	// Package declaration
-	builder.WriteString(fmt.Sprintf("package %s\n\n", packageName))
+	builder.WriteString(fmt.Sprintf("package %s\n\n", targetPackage))
 
 	// Determine needed imports
 	needsTime := false
+	needsSourcePackage := false
+
 	for _, field := range fields {
 		if strings.Contains(field.Type, "time.Time") {
 			needsTime = true
-			break
 		}
+	}
+
+	// Check if we need to import the source package for the match type
+	if g.outPackage != "" && g.outPackage != packageName {
+		needsSourcePackage = true
 	}
 
 	// Imports
@@ -251,18 +266,31 @@ func (g *Generator) generateMatcherCode(fields []StructField, packageName string
 	if needsTime {
 		builder.WriteString("\t\"time\"\n")
 	}
+	if needsSourcePackage {
+		// We need to import the source package to reference the match type
+		// For now, we'll assume it's in the current module path
+		builder.WriteString("\t\"github.com/krelinga/go-match\"\n")
+	}
 	builder.WriteString("\t\"github.com/krelinga/go-match/matchfmt\"\n")
 	builder.WriteString(")\n\n")
 
 	// Struct definition
+	matcherTypeRef := "Matcher"
+	if needsSourcePackage {
+		matcherTypeRef = packageName + ".Matcher"
+	}
 	builder.WriteString(fmt.Sprintf("type %s struct {\n", g.outType))
 	for _, field := range fields {
-		builder.WriteString(fmt.Sprintf("\t%s Matcher[%s]\n", field.Name, field.Type))
+		builder.WriteString(fmt.Sprintf("\t%s %s[%s]\n", field.Name, matcherTypeRef, field.Type))
 	}
 	builder.WriteString("}\n\n")
 
 	// Match method
-	builder.WriteString(fmt.Sprintf("func (m *%s) Match(got %s) (bool, string) {\n", g.outType, g.matchType))
+	matchTypeRef := g.matchType
+	if needsSourcePackage {
+		matchTypeRef = packageName + "." + g.matchType
+	}
+	builder.WriteString(fmt.Sprintf("func (m *%s) Match(got %s) (bool, string) {\n", g.outType, matchTypeRef))
 	builder.WriteString("\tvar details []string\n")
 	builder.WriteString("\tallMatched := true\n\n")
 
