@@ -54,7 +54,7 @@ func main() {
 
 func (g *Generator) generate() error {
 	// Find the struct definition in the current package
-	fields, packageName, err := g.findStructFields()
+	fields, packageName, err := findStructFields(g.matchType)
 	if err != nil {
 		return fmt.Errorf("failed to find struct fields: %w", err)
 	}
@@ -73,7 +73,7 @@ func (g *Generator) generate() error {
 	return nil
 }
 
-func (g *Generator) findStructFields() ([]StructField, string, error) {
+func findStructFields(matchType string) ([]StructField, string, error) {
 	// Parse all Go files in the current directory
 	fset := token.NewFileSet()
 	pkgs, err := parser.ParseDir(fset, ".", func(info os.FileInfo) bool {
@@ -93,7 +93,7 @@ func (g *Generator) findStructFields() ([]StructField, string, error) {
 			ast.Inspect(file, func(n ast.Node) bool {
 				switch node := n.(type) {
 				case *ast.TypeSpec:
-					if node.Name.Name == g.matchType {
+					if node.Name.Name == matchType {
 						if structType, ok := node.Type.(*ast.StructType); ok {
 							fields = extractFields(structType, fset)
 							return false // Found it, stop searching
@@ -112,7 +112,7 @@ func (g *Generator) findStructFields() ([]StructField, string, error) {
 	}
 
 	if len(fields) == 0 {
-		return nil, "", fmt.Errorf("struct type %s not found in current package", g.matchType)
+		return nil, "", fmt.Errorf("struct type %s not found in current package", matchType)
 	}
 
 	return fields, packageName, nil
