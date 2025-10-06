@@ -95,7 +95,7 @@ func (g *Generator) findStructFields() ([]StructField, string, error) {
 				case *ast.TypeSpec:
 					if node.Name.Name == g.matchType {
 						if structType, ok := node.Type.(*ast.StructType); ok {
-							fields = g.extractFields(structType, fset)
+							fields = extractFields(structType, fset)
 							return false // Found it, stop searching
 						}
 					}
@@ -118,7 +118,7 @@ func (g *Generator) findStructFields() ([]StructField, string, error) {
 	return fields, packageName, nil
 }
 
-func (g *Generator) extractFields(structType *ast.StructType, fset *token.FileSet) []StructField {
+func extractFields(structType *ast.StructType, fset *token.FileSet) []StructField {
 	var fields []StructField
 
 	for _, field := range structType.Fields.List {
