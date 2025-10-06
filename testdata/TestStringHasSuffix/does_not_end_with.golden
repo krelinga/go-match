@@ -1,0 +1,3 @@
+❌ match.StringHasSuffix:
+   Expected: string ends with "hello"
+   Actual:   string "hello world" does not end with "hello"
