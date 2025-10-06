@@ -7,7 +7,7 @@ import (
 	"github.com/krelinga/go-typemap"
 )
 
-func TestStringContainsTm(t *testing.T) {
+func TestStringLikeContainsTm(t *testing.T) {
 	type CustomString string
 
 	tm := typemap.StringFunc[CustomString](func(s CustomString) string {
@@ -79,7 +79,7 @@ func TestStringContainsTm(t *testing.T) {
 	goldie := newGoldie(t)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			matcher := match.StringContainsTm(tm, tt.substr)
+			matcher := match.StringLikeContainsTm(tm, tt.substr)
 			matched, explanation := matcher.Match(tt.input)
 
 			if matched != tt.wantMatch {
