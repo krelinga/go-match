@@ -110,7 +110,7 @@ func (m *UserMatcher) Match(got User) (bool, string) {
 func TestUser(t *testing.T) {
     user := User{
         ID:       123,
-        Username: "johndoe",
+        Username: "john doe",
         Email:    "john@example.com",
         IsActive: true,
     }
