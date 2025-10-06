@@ -1,8 +1,12 @@
 {
     "cSpell.words": [
+        "Errorf",
+        "fset",
         "krelinga",
-        "matchtm",
         "matchfmt",
+        "matchgen",
+        "matchtm",
+        "pkgs",
         "sebdah",
         "typemap"
     ]
