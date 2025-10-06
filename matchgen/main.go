@@ -66,7 +66,7 @@ func (g *Generator) generate() error {
 	}
 
 	// Write to output file
-	if err := g.writeToFile(code); err != nil {
+	if err := writeToFile(code, g.outFile); err != nil {
 		return fmt.Errorf("failed to write file: %w", err)
 	}
 
@@ -311,7 +311,7 @@ func (g *Generator) generateMatcherCode(fields []StructField, packageName string
 	return builder.String(), nil
 }
 
-func (g *Generator) writeToFile(code string) error {
+func writeToFile(code string, outFile string) error {
 	// Parse and format the generated code
 	fset := token.NewFileSet()
 	parsed, err := parser.ParseFile(fset, "", code, parser.ParseComments)
@@ -320,13 +320,13 @@ func (g *Generator) writeToFile(code string) error {
 	}
 
 	// Create output directory if it doesn't exist
-	dir := filepath.Dir(g.outFile)
+	dir := filepath.Dir(outFile)
 	if err := os.MkdirAll(dir, 0755); err != nil {
 		return fmt.Errorf("failed to create output directory: %w", err)
 	}
 
 	// Open output file
-	file, err := os.Create(g.outFile)
+	file, err := os.Create(outFile)
 	if err != nil {
 		return fmt.Errorf("failed to create output file: %w", err)
 	}
