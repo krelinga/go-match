@@ -152,7 +152,7 @@ func (g *Generator) formatType(expr ast.Expr, fset *token.FileSet) string {
 			return "[]" + g.formatType(t.Elt, fset)
 		}
 		// Array with length
-		return "[" + g.formatExpr(t.Len, fset) + "]" + g.formatType(t.Elt, fset)
+		return "[" + formatExpr(t.Len, fset) + "]" + g.formatType(t.Elt, fset)
 	case *ast.MapType:
 		keyType := g.formatType(t.Key, fset)
 		valueType := g.formatType(t.Value, fset)
@@ -178,11 +178,11 @@ func (g *Generator) formatType(expr ast.Expr, fset *token.FileSet) string {
 		return "func" + g.formatFuncSignature(t, fset)
 	default:
 		// Fallback: try to format as source code
-		return g.formatExpr(expr, fset)
+		return formatExpr(expr, fset)
 	}
 }
 
-func (g *Generator) formatExpr(expr ast.Expr, fset *token.FileSet) string {
+func formatExpr(expr ast.Expr, fset *token.FileSet) string {
 	var buf strings.Builder
 	if err := format.Node(&buf, fset, expr); err != nil {
 		return "interface{}" // Fallback
