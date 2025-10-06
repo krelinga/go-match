@@ -125,7 +125,7 @@ func (g *Generator) extractFields(structType *ast.StructType, fset *token.FileSe
 		// Only process exported fields (those starting with uppercase)
 		for _, name := range field.Names {
 			if name.IsExported() {
-				fieldType := g.formatType(field.Type, fset)
+				fieldType := formatType(field.Type, fset)
 				fields = append(fields, StructField{
 					Name: name.Name,
 					Type: fieldType,
@@ -137,25 +137,25 @@ func (g *Generator) extractFields(structType *ast.StructType, fset *token.FileSe
 	return fields
 }
 
-func (g *Generator) formatType(expr ast.Expr, fset *token.FileSet) string {
+func formatType(expr ast.Expr, fset *token.FileSet) string {
 	switch t := expr.(type) {
 	case *ast.Ident:
 		return t.Name
 	case *ast.SelectorExpr:
-		pkg := g.formatType(t.X, fset)
+		pkg := formatType(t.X, fset)
 		return pkg + "." + t.Sel.Name
 	case *ast.StarExpr:
-		return "*" + g.formatType(t.X, fset)
+		return "*" + formatType(t.X, fset)
 	case *ast.ArrayType:
 		if t.Len == nil {
 			// Slice
-			return "[]" + g.formatType(t.Elt, fset)
+			return "[]" + formatType(t.Elt, fset)
 		}
 		// Array with length
-		return "[" + formatExpr(t.Len, fset) + "]" + g.formatType(t.Elt, fset)
+		return "[" + formatExpr(t.Len, fset) + "]" + formatType(t.Elt, fset)
 	case *ast.MapType:
-		keyType := g.formatType(t.Key, fset)
-		valueType := g.formatType(t.Value, fset)
+		keyType := formatType(t.Key, fset)
+		valueType := formatType(t.Value, fset)
 		return "map[" + keyType + "]" + valueType
 	case *ast.ChanType:
 		dir := ""
@@ -167,7 +167,7 @@ func (g *Generator) formatType(expr ast.Expr, fset *token.FileSet) string {
 		default:
 			dir = "chan "
 		}
-		return dir + g.formatType(t.Value, fset)
+		return dir + formatType(t.Value, fset)
 	case *ast.InterfaceType:
 		if len(t.Methods.List) == 0 {
 			return "interface{}"
@@ -175,7 +175,7 @@ func (g *Generator) formatType(expr ast.Expr, fset *token.FileSet) string {
 		// For complex interfaces, we'll just use interface{}
 		return "interface{}"
 	case *ast.FuncType:
-		return "func" + g.formatFuncSignature(t, fset)
+		return "func" + formatFuncSignature(t, fset)
 	default:
 		// Fallback: try to format as source code
 		return formatExpr(expr, fset)
@@ -190,14 +190,14 @@ func formatExpr(expr ast.Expr, fset *token.FileSet) string {
 	return buf.String()
 }
 
-func (g *Generator) formatFuncSignature(funcType *ast.FuncType, fset *token.FileSet) string {
+func formatFuncSignature(funcType *ast.FuncType, fset *token.FileSet) string {
 	var parts []string
 
 	// Parameters
 	if funcType.Params != nil {
 		var params []string
 		for _, field := range funcType.Params.List {
-			fieldType := g.formatType(field.Type, fset)
+			fieldType := formatType(field.Type, fset)
 			if len(field.Names) == 0 {
 				params = append(params, fieldType)
 			} else {
@@ -215,7 +215,7 @@ func (g *Generator) formatFuncSignature(funcType *ast.FuncType, fset *token.File
 	if funcType.Results != nil && len(funcType.Results.List) > 0 {
 		var results []string
 		for _, field := range funcType.Results.List {
-			fieldType := g.formatType(field.Type, fset)
+			fieldType := formatType(field.Type, fset)
 			if len(field.Names) == 0 {
 				results = append(results, fieldType)
 			} else {
