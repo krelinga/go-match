@@ -25,5 +25,7 @@ func TestEqual(t *testing.T) {
 	ff := func(v reflect.Value) (string, error) {
 		return "formatted", nil
 	}
-	match(t, input, opts.WithOptions([]opts.Option{opts.WithFmtFunc(nil, ff)}, opts.Equal(41)))
+	match(t, input, opts.WithOptions(
+		[]opts.Option{opts.WithFmtFunc(nil, ff)},
+		opts.Equal(41)))
 }
