@@ -37,7 +37,7 @@ func Equal[T any](want T) Func {
 	}
 }
 
-func WithOptions(opts ...Option) Bridge {
+func Update(opts ...Option) Bridge {
 	return func(options Options, vals Values, m Func) (bool, error) {
 		for _, o := range opts {
 			options = o(options)

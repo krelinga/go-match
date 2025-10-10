@@ -9,7 +9,7 @@ import (
 
 func TestFmt(t *testing.T) {
 	o := opts.NewOptions()
-	o = opts.WithFmtFunc(nil, func (v reflect.Value) (string, error) {
+	o = opts.SetFmtFunc(nil, func(v reflect.Value) (string, error) {
 		return "formatted", nil
 	})(o)
 	gotStr, gotErr := opts.Fmt(o, reflect.ValueOf(42))

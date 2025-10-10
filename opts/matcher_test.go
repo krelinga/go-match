@@ -26,6 +26,6 @@ func TestEqual(t *testing.T) {
 		return "formatted", nil
 	}
 	match(t, input,
-		opts.WithOptions(opts.WithFmtFunc(nil, ff)).And(
+		opts.Update(opts.SetFmtFunc(nil, ff)).And(
 			opts.Equal(42)))
 }

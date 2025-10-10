@@ -12,7 +12,7 @@ type fmtOpKey struct{}
 
 var fmtKey = fmtOpKey{}
 
-func WithFmtFunc(typeKey reflect.Type, fmt FmtFunc) Option {
+func SetFmtFunc(typeKey reflect.Type, fmt FmtFunc) Option {
 	return func(options Options) Options {
 		return options.With(typeKey, fmtKey, fmt)
 	}
