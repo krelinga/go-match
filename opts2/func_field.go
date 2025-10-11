@@ -2,7 +2,7 @@ package opts2
 
 import "reflect"
 
-func Field(name string) Bridge {
+func Field(name string) BridgeOne {
 	return func(o Opts, vals Vals, f Func) Out {
 		val, err := Want1Val(vals)
 		if err != nil {

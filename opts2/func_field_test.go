@@ -27,6 +27,8 @@ func TestField(t *testing.T) {
 		{Name: "Bob", Age: 25},
 	}
 	match(t, opts2.NewVals(people[0]),
-		opts2.Field("Name").Match(opts2.Equal("Alice")),
-	)
+		opts2.All().Match(
+			opts2.Field("Name").Match(opts2.Equal("Alice")),
+			opts2.Field("Age").Match(opts2.Equal(30)),
+		))
 }
