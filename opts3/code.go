@@ -1,6 +1,9 @@
 package opts3
 
-import "fmt"
+import (
+	"fmt"
+	"slices"
+)
 
 type Code int
 
@@ -10,7 +13,17 @@ const (
 	No
 )
 
+func (c Code) PanicIfInvalid() {
+	switch c {
+	case Err, Yes, No:
+		// valid
+	default:
+		panic(fmt.Sprintf("unknown Code value: %d", c))
+	}
+}
+
 func (c Code) String() string {
+	c.PanicIfInvalid()
 	switch c {
 	case Err:
 		return "Err"
@@ -19,11 +32,12 @@ func (c Code) String() string {
 	case No:
 		return "No"
 	default:
-		panic(fmt.Sprintf("unknown Code value: %d", c))
+		panic("unreachable")
 	}
 }
 
 func (c Code) Emoji() string {
+	c.PanicIfInvalid()
 	switch c {
 	case Err:
 		return "⚠️"
@@ -32,11 +46,12 @@ func (c Code) Emoji() string {
 	case No:
 		return "❌"
 	default:
-		panic(fmt.Sprintf("unknown Code value: %d", c))
+		panic("unreachable")
 	}
 }
 
 func CodeNot(c Code) Code {
+	c.PanicIfInvalid()
 	switch c {
 	case Err:
 		return Err
@@ -45,7 +60,7 @@ func CodeNot(c Code) Code {
 	case No:
 		return Yes
 	default:
-		panic(fmt.Sprintf("unknown Code value: %d", c))
+		panic("unreachable")
 	}
 }
 
@@ -54,12 +69,13 @@ func CodeAnd(codes ...Code) Code {
 		return Err
 	}
 	for _, c := range codes {
+		c.PanicIfInvalid()
 		if c == Err {
 			return Err
 		}
-		if c == No {
-			return No
-		}
+	}
+	if slices.Contains(codes, No) {
+		return No
 	}
 	return Yes
 }
@@ -69,12 +85,13 @@ func CodeOr(codes ...Code) Code {
 		return Err
 	}
 	for _, c := range codes {
+		c.PanicIfInvalid()
 		if c == Err {
 			return Err
 		}
-		if c == Yes {
-			return Yes
-		}
+	}
+	if slices.Contains(codes, Yes) {
+		return Yes
 	}
 	return No
 }
