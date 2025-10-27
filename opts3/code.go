@@ -50,7 +50,7 @@ func (c Code) Emoji() string {
 	}
 }
 
-func CodeNot(c Code) Code {
+func NotCode(c Code) Code {
 	c.PanicIfInvalid()
 	switch c {
 	case Err:
@@ -64,7 +64,7 @@ func CodeNot(c Code) Code {
 	}
 }
 
-func CodeAnd(codes ...Code) Code {
+func AndCode(codes ...Code) Code {
 	if len(codes) == 0 {
 		return Err
 	}
@@ -80,7 +80,7 @@ func CodeAnd(codes ...Code) Code {
 	return Yes
 }
 
-func CodeOr(codes ...Code) Code {
+func OrCode(codes ...Code) Code {
 	if len(codes) == 0 {
 		return Err
 	}

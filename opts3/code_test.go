@@ -8,8 +8,8 @@ import (
 
 func TestCodePanicIfInvalid(t *testing.T) {
 	tests := []struct {
-		name      string
-		code      opts3.Code
+		name        string
+		code        opts3.Code
 		shouldPanic bool
 	}{
 		{
@@ -175,7 +175,7 @@ func TestCodeEmojiPanic(t *testing.T) {
 	}
 }
 
-func TestCodeNot(t *testing.T) {
+func TestNotCode(t *testing.T) {
 	tests := []struct {
 		name string
 		code opts3.Code
@@ -200,7 +200,7 @@ func TestCodeNot(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := opts3.CodeNot(tt.code)
+			got := opts3.NotCode(tt.code)
 			if got != tt.want {
 				t.Errorf("CodeNot(%v) = %v, want %v", tt.code, got, tt.want)
 			}
@@ -208,7 +208,7 @@ func TestCodeNot(t *testing.T) {
 	}
 }
 
-func TestCodeNotPanic(t *testing.T) {
+func TestNotCodePanic(t *testing.T) {
 	tests := []struct {
 		name string
 		code opts3.Code
@@ -230,12 +230,12 @@ func TestCodeNotPanic(t *testing.T) {
 					t.Errorf("CodeNot() did not panic for unknown value %d", tt.code)
 				}
 			}()
-			_ = opts3.CodeNot(tt.code)
+			_ = opts3.NotCode(tt.code)
 		})
 	}
 }
 
-func TestCodeAnd(t *testing.T) {
+func TestAndCode(t *testing.T) {
 	tests := []struct {
 		name  string
 		codes []opts3.Code
@@ -290,7 +290,7 @@ func TestCodeAnd(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := opts3.CodeAnd(tt.codes...)
+			got := opts3.AndCode(tt.codes...)
 			if got != tt.want {
 				t.Errorf("CodeAnd(%v) = %v, want %v", tt.codes, got, tt.want)
 			}
@@ -298,7 +298,7 @@ func TestCodeAnd(t *testing.T) {
 	}
 }
 
-func TestCodeAndPanic(t *testing.T) {
+func TestAndCodePanic(t *testing.T) {
 	tests := []struct {
 		name  string
 		codes []opts3.Code
@@ -320,12 +320,12 @@ func TestCodeAndPanic(t *testing.T) {
 					t.Errorf("CodeAnd() did not panic for invalid codes %v", tt.codes)
 				}
 			}()
-			_ = opts3.CodeAnd(tt.codes...)
+			_ = opts3.AndCode(tt.codes...)
 		})
 	}
 }
 
-func TestCodeOr(t *testing.T) {
+func TestOrCode(t *testing.T) {
 	tests := []struct {
 		name  string
 		codes []opts3.Code
@@ -380,7 +380,7 @@ func TestCodeOr(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := opts3.CodeOr(tt.codes...)
+			got := opts3.OrCode(tt.codes...)
 			if got != tt.want {
 				t.Errorf("CodeOr(%v) = %v, want %v", tt.codes, got, tt.want)
 			}
@@ -388,7 +388,7 @@ func TestCodeOr(t *testing.T) {
 	}
 }
 
-func TestCodeOrPanic(t *testing.T) {
+func TestOrCodePanic(t *testing.T) {
 	tests := []struct {
 		name  string
 		codes []opts3.Code
@@ -410,7 +410,7 @@ func TestCodeOrPanic(t *testing.T) {
 					t.Errorf("CodeOr() did not panic for invalid codes %v", tt.codes)
 				}
 			}()
-			_ = opts3.CodeOr(tt.codes...)
+			_ = opts3.OrCode(tt.codes...)
 		})
 	}
 }
