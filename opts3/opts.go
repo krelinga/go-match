@@ -8,9 +8,9 @@ type Opts interface {
 
 type optsImpl struct {
 	parent Opts
-	tag any
-	typ reflect.Type
-	value any
+	tag    any
+	typ    reflect.Type
+	value  any
 }
 
 func (o *optsImpl) Get(tag any, typ reflect.Type) (any, bool) {
@@ -29,7 +29,7 @@ func NewOpts() Opts {
 	return &o
 }
 
-func ExtendOpts(parent Opts, tag any, typ reflect.Type, value any) Opts {
+func WrapOpts(parent Opts, tag any, typ reflect.Type, value any) Opts {
 	return &optsImpl{
 		parent: parent,
 		tag:    tag,
