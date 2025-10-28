@@ -309,3 +309,181 @@ func TestWant1(t *testing.T) {
 		})
 	}
 }
+
+func TestWant2(t *testing.T) {
+	tests := []struct {
+		name    string
+		vals    opts3.Vals
+		f       func(*testing.T, opts3.Vals)
+	}{
+		{
+			name: "correct types",
+			vals: opts3.NewVals2(42, "hello"),
+			f: func(t *testing.T, vals opts3.Vals) {
+				got1, got2, err := opts3.Want2[int, string](vals)
+				if err != nil {
+					t.Fatalf("unexpected error: %v", err)
+				}
+				want1 := 42
+				want2 := "hello"
+				if got1 != want1 {
+					t.Errorf("got1 %v, want %v", got1, want1)
+				}
+				if got2 != want2 {
+					t.Errorf("got2 %v, want %v", got2, want2)
+				}
+			},
+		},
+		{
+			name: "incorrect first type",
+			vals: opts3.NewVals2("hello", 42),
+			f: func(t *testing.T, vals opts3.Vals) {
+				_, _, err := opts3.Want2[int, int](vals)
+				if err == nil {
+					t.Fatalf("expected error, got nil")
+				}
+			},
+		},
+		{
+			name: "incorrect second type",
+			vals: opts3.NewVals2(42, 3.14),
+			f: func(t *testing.T, vals opts3.Vals) {
+				_, _, err := opts3.Want2[int, string](vals)
+				if err == nil {
+					t.Fatalf("expected error, got nil")
+				}
+			},
+		},
+		{
+			name: "invalid value",
+			vals: opts3.Vals{reflect.Value{}, reflect.ValueOf("hello")},
+			f: func(t *testing.T, vals opts3.Vals) {
+				_, _, err := opts3.Want2[int, string](vals)
+				if err == nil {
+					t.Fatalf("expected error, got nil")
+				}
+			},
+		},
+		{
+			name: "wrong number of values - too few",
+			vals: opts3.NewVals1(42),
+			f: func(t *testing.T, vals opts3.Vals) {
+				_, _, err := opts3.Want2[int, string](vals)
+				if err == nil {
+					t.Fatalf("expected error, got nil")
+				}
+			},
+		},
+		{
+			name: "wrong number of values - too many",
+			vals: opts3.NewVals3(42, "hello", 3.14),
+			f: func(t *testing.T, vals opts3.Vals) {
+				_, _, err := opts3.Want2[int, string](vals)
+				if err == nil {
+					t.Fatalf("expected error, got nil")
+				}
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tt.f(t, tt.vals)
+		})
+	}
+}
+
+func TestWant3(t *testing.T) {
+	tests := []struct {
+		name    string
+		vals    opts3.Vals
+		f       func(*testing.T, opts3.Vals)
+	}{
+		{
+			name: "correct types",
+			vals: opts3.NewVals3(42, "hello", 3.14),
+			f: func(t *testing.T, vals opts3.Vals) {
+				got1, got2, got3, err := opts3.Want3[int, string, float64](vals)
+				if err != nil {
+					t.Fatalf("unexpected error: %v", err)
+				}
+				want1 := 42
+				want2 := "hello"
+				want3 := 3.14
+				if got1 != want1 {
+					t.Errorf("got1 %v, want %v", got1, want1)
+				}
+				if got2 != want2 {
+					t.Errorf("got2 %v, want %v", got2, want2)
+				}
+				if got3 != want3 {
+					t.Errorf("got3 %v, want %v", got3, want3)
+				}
+			},
+		},
+		{
+			name: "incorrect first type",
+			vals: opts3.NewVals3("hello", 42, 3.14),
+			f: func(t *testing.T, vals opts3.Vals) {
+				_, _, _, err := opts3.Want3[int, int, float64](vals)
+				if err == nil {
+					t.Fatalf("expected error, got nil")
+				}
+			},
+		},
+		{
+			name: "incorrect second type",
+			vals: opts3.NewVals3(42, 3.14, "hello"),
+			f: func(t *testing.T, vals opts3.Vals) {
+				_, _, _, err := opts3.Want3[int, string, string](vals)
+				if err == nil {
+					t.Fatalf("expected error, got nil")
+				}
+			},
+		},
+		{
+			name: "incorrect third type",
+			vals: opts3.NewVals3(42, "hello", true),
+			f: func(t *testing.T, vals opts3.Vals) {
+				_, _, _, err := opts3.Want3[int, string, float64](vals)
+				if err == nil {
+					t.Fatalf("expected error, got nil")
+				}
+			},
+		},
+		{
+			name: "invalid value",
+			vals: opts3.Vals{reflect.Value{}, reflect.ValueOf("hello"), reflect.ValueOf(3.14)},
+			f: func(t *testing.T, vals opts3.Vals) {
+				_, _, _, err := opts3.Want3[int, string, float64](vals)
+				if err == nil {
+					t.Fatalf("expected error, got nil")
+				}
+			},
+		},
+		{
+			name: "wrong number of values - too few",
+			vals: opts3.NewVals2(42, "hello"),
+			f: func(t *testing.T, vals opts3.Vals) {
+				_, _, _, err := opts3.Want3[int, string, float64](vals)
+				if err == nil {
+					t.Fatalf("expected error, got nil")
+				}
+			},
+		},
+		{
+			name: "wrong number of values - too many",
+			vals: opts3.NewVals(42, "hello", 3.14, true),
+			f: func(t *testing.T, vals opts3.Vals) {
+				_, _, _, err := opts3.Want3[int, string, float64](vals)
+				if err == nil {
+					t.Fatalf("expected error, got nil")
+				}
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tt.f(t, tt.vals)
+		})
+	}
+}
