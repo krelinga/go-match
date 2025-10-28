@@ -2,18 +2,18 @@ package opts3
 
 import "reflect"
 
-type Opts interface {
+type Env interface {
 	Get(tag any, typ reflect.Type) (any, bool)
 }
 
-type optsImpl struct {
-	parent Opts
+type envImpl struct {
+	parent Env
 	tag    any
 	typ    reflect.Type
 	value  any
 }
 
-func (o *optsImpl) Get(tag any, typ reflect.Type) (any, bool) {
+func (o *envImpl) Get(tag any, typ reflect.Type) (any, bool) {
 	if o == nil {
 		return nil, false
 	}
@@ -24,13 +24,13 @@ func (o *optsImpl) Get(tag any, typ reflect.Type) (any, bool) {
 	return o.parent.Get(tag, typ)
 }
 
-func NewOpts() Opts {
-	var o optsImpl
+func NewEnv() Env {
+	var o envImpl
 	return &o
 }
 
-func WrapOpts(parent Opts, tag any, typ reflect.Type, value any) Opts {
-	return &optsImpl{
+func WrapEnv(parent Env, tag any, typ reflect.Type, value any) Env {
+	return &envImpl{
 		parent: parent,
 		tag:    tag,
 		typ:    typ,
